@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean("is_current")->default(true);   
             $table->timestamps();
 
-            $table->foreignId("profiles_id")->references("id")->on("profiles");
+            // $table->foreignId("profiles_id")->references("id")->on("profiles");
 
             $table->index(["profiles_id", "is_current"]);
         });

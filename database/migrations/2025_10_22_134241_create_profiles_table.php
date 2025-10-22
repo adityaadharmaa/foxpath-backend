@@ -23,7 +23,7 @@ return new class extends Migration
             $table->date("date_of_birth")->nullable();
             $table->timestamps();
 
-            $table->foreignId('users_id')->references('id')->on('users');
+            // $table->foreignId('users_id')->references('id')->on('users');
         });
     }
 

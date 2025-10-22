@@ -37,10 +37,10 @@ return new class extends Migration
             $table->timestamp("placement_end_at")->nullable();
             $table->timestamps();
 
-            $table->foreignId("programs_id")->references("id")->on("programs");
-            $table->foreignId("profiles_id")->references("id")->on("profiles");
+            // $table->foreignId("programs_id")->references("id")->on("programs");
+            // $table->foreignId("profiles_id")->references("id")->on("profiles");
 
-            $table->unique(["programs_id","profiles_id", "academic_input_type"]);
+            // $table->unique(['programs_id', 'profiles_id', 'academic_input_type']);
         });
     }
 
