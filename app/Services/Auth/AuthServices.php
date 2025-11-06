@@ -99,7 +99,7 @@ class AuthServices
 
     return response()->json([
       'status' => 'success',
-      'message' => 'Registration Successful',
+      'message' => 'Registration Successfully',
       'data' => [
         'user' => [
           'username' => $user->username,
