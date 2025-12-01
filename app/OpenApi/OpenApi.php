@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\OpenApi;
+
+use OpenApi\Annotations as OA;
 
 /**
  * @OA\Info(
@@ -16,8 +18,4 @@ namespace App\Http\Controllers;
  *     bearerFormat="JWT"
  * )
  */
-
-abstract class Controller
-{
-    //
-}
+class OpenApi {}
