@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('profile_educations', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger("profiles_id");
+            $table->foreignId("profiles_id")->references("id")->on("profiles");
+            // $table->unsignedBigInteger("profiles_id");
             $table->string("institution_name_raw");
             $table->string("institution_name_canonical", 191)->nullable()->index();
             $table->string("institution_slug", 191)->nullable()->index();
@@ -22,7 +23,6 @@ return new class extends Migration
             $table->boolean("is_current")->default(true);   
             $table->timestamps();
 
-            $table->foreignId("profiles_id")->references("id")->on("profiles");
 
             $table->index(["profiles_id", "is_current"]);
         });

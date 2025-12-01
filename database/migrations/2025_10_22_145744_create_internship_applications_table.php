@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('internship_applications', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger("programs_id");
-            $table->unsignedBigInteger("profiles_id");
+            // $table->unsignedBigInteger("programs_id");
+            // $table->unsignedBigInteger("profiles_id");
+            $table->foreignId("programs_id")->references("id")->on("programs");
+            $table->foreignId("profiles_id")->references("id")->on("profiles");
             $table->enum("status", [
                 "DRAFT", "SUBMITTED", "UNDER_REVIEW", "PASSED", "WAITLIST", "REJECTED", "WITHDRAWN"
             ])->default("DRAFT")->index();
@@ -27,9 +29,6 @@ return new class extends Migration
             $table->timestamp("placement_start_at")->nullable();
             $table->timestamp("placement_end_at")->nullable();
             $table->timestamps();
-
-            $table->foreignId("programs_id")->references("id")->on("programs");
-            $table->foreignId("profiles_id")->references("id")->on("profiles");
 
             $table->unique(["programs_id","profiles_id"]);
         });
