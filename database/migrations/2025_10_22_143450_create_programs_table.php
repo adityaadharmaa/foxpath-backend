@@ -26,7 +26,9 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // $table->index(["is_active", "registration_starts_at", "registration_ends_at"]);
+            $table->index(["is_active"]);
+            $table->index([ "registration_starts_at"]);
+            $table->index([ "registration_ends_at"]);
         });
     }
 

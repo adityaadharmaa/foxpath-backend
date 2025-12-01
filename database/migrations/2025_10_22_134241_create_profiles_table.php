@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('profiles', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('users_id');
+            $table->foreignId('users_id')->references('id')->on('users');
+            // $table->unsignedBigInteger('users_id');
             $table->enum("applicant_type", ['siswa', 'mahasiswa']);
-            $table->string("student_identifier")->nullable();
             $table->string("full_name");
             $table->string("phone")->nullable();
             $table->text("address")->nullable();
@@ -23,7 +23,6 @@ return new class extends Migration
             $table->date("date_of_birth")->nullable();
             $table->timestamps();
 
-            // $table->foreignId('users_id')->references('id')->on('users');
         });
     }
 
