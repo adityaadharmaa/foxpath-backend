@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Users\AdminStoreUserRequest;
+use App\Http\Requests\Users\AdminUpdateUserRoleRequest;
 use App\Http\Requests\Users\UsersIndexRequest;
 use App\Services\Users\UserService;
 use Illuminate\Http\Request;
@@ -15,7 +17,18 @@ class UsersController extends Controller
         $this->userService = $userService; 
     }
 
-    public function index(UsersIndexRequest $request){
+    public function index(UsersIndexRequest $request)
+    {
         return $this->userService->index($request);
+    }
+
+    public function store(AdminStoreUserRequest $request)
+    {
+        return $this->userService->storeByAdmin($request);
+    }
+
+    public function updateRole(AdminUpdateUserRoleRequest $request, string $id)
+    {
+        return $this->userService->updateRole($request, $id);
     }
 }

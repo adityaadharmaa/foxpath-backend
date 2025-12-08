@@ -25,6 +25,8 @@ Route::prefix('v1')->group(function(){
     Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum', 'role:admin'])->group(function(){
             // Users Route Start
             Route::get('/users', [UsersController::class, 'index'])->name('users.index');
+            Route::post('/users', [UsersController::class, 'store'])->name('users.store');
+            Route::patch('/users/{id}/role', [UsersController::class, 'updateRole'])->name('users.update.role');
             // Users Route End
         
             // Roles Route Start
