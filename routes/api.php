@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Users\UsersController;
 use App\Services\Email\EmailVerificationServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,12 +23,17 @@ Route::prefix('v1')->group(function(){
     });
 
     Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum', 'role:admin'])->group(function(){
+            // Users Route Start
+            Route::get('/users', [UsersController::class, 'index'])->name('users.index');
+            // Users Route End
+        
             // Roles Route Start
             Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
             Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
             Route::get('/roles/{id}', [RoleController::class, 'show'])->name('roles.show');
             Route::patch('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
             Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
+            // Roles Route End
     });
 
     Route::middleware(['auth:sanctum'])->group(function(){
