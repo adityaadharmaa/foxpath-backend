@@ -2,15 +2,24 @@
 
 namespace App\Services\Users;
 
+use App\Exports\Users\UsersExport;
 use App\Http\Requests\Users\AdminStoreUserRequest;
 use App\Http\Requests\Users\AdminUpdateUserRoleRequest;
+use App\Http\Requests\Users\UsersExportRequest;
 use App\Http\Requests\Users\UsersIndexRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Email\EmailVerificationServices;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Facades\Excel;
 
-class UserService{
+class UserService
+{
+    public function __construct(
+        protected EmailVerificationServices $emailServices
+    ) {}
+
     public function index(UsersIndexRequest $request)
     {
         $data = $request->validated();
@@ -23,20 +32,21 @@ class UserService{
             'users.username',
             'users.email',
             'users.roles_id',
+            'users.is_active',
             'roles.name as role_name',
             'profiles.applicant_type',
         )
-        ->join('roles', 'users.roles_id', '=' ,'roles.id')
-        ->leftJoin('profiles', 'users.id', '=', 'profiles.users_id')
-        ->orderBy('users.created_at', 'desc');
+            ->join('roles', 'users.roles_id', '=', 'roles.id')
+            ->leftJoin('profiles', 'users.id', '=', 'profiles.users_id')
+            ->orderBy('users.created_at', 'desc');
 
-        if($type) {
+        if ($type) {
             $query->where('profiles.applicant_type', $type);
         }
 
         $users = $query->paginate($perPage);
 
-         if ($type && $users->total() === 0) {
+        if ($type && $users->total() === 0) {
             return response()->json([
                 'status'  => 'success',
                 'message' => "No users found for type '{$type}'.",
@@ -77,7 +87,7 @@ class UserService{
 
         $role = Role::where('name', $data['role'])->first();
 
-        if(!$role){
+        if (!$role) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Role not found.'
@@ -86,7 +96,7 @@ class UserService{
 
         DB::beginTransaction();
 
-        try{
+        try {
             $user = User::create([
                 'username' => $data['username'],
                 'email' => $data['email'],
@@ -111,8 +121,7 @@ class UserService{
                     ],
                 ],
             ], 201);
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
@@ -129,7 +138,7 @@ class UserService{
 
         $user = User::find($id);
 
-        if(!$user){
+        if (!$user) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'User not found.'
@@ -138,7 +147,7 @@ class UserService{
 
         $role = Role::where('name', $data['role'])->first();
 
-        if(!$role){
+        if (!$role) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Role not found.'
@@ -146,7 +155,7 @@ class UserService{
         }
 
         DB::beginTransaction();
-        try{
+        try {
             $user->roles_id = $role->id;
             $user->save();
 
@@ -164,9 +173,7 @@ class UserService{
                     ],
                 ],
             ], 200);
-
-        }catch(\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
@@ -175,5 +182,178 @@ class UserService{
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
+    }
+
+    public function activate(string $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found.'
+            ], 404);
+        }
+
+        if ((int) $user->is_active === 1) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User is already active.',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'is_active' => $user->is_active,
+                    ],
+                ],
+            ], 200);
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $user->is_active = 1;
+            $user->save();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User activated successfully.',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'is_active' => $user->is_active
+                    ],
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to activate user.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    public function deactivate(string $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        if ((int) $user->is_active === 0) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User already inactive.',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'is_active' => $user->is_active
+                    ],
+                ],
+            ], 200);
+        }
+
+        DB::beginTransaction();
+        try {
+            $user->is_active = 0;
+            $user->save();
+
+            $user->tokens()->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User deactivated successfully.',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'is_active' => $user->is_active,
+                    ],
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to deactivate user.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    public function resendVerification(string $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found.'
+            ], 404);
+        }
+
+        if ((int) $user->is_active === 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User is already active. Verification email is not needed.',
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $this->emailServices->sendVerificationEmail($user);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Verification email has been resent.'
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to resend verification email.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    public function export(UsersExportRequest $request)
+    {
+        $data = $request->validated();
+        $type = $data['type'] ?? null;
+        $format = $data['format'];
+
+        $fileNameBase = 'users';
+        if ($type) {
+            $fileNameBase .= "_{$type}";
+        }
+        $fileNameBase .= '_' . now()->format('Y-m-d_His');
+
+        $extension = $format === 'csv' ? 'csv' : 'xlsx';
+
+        $fileName = $fileNameBase . '.' . $extension;
+
+        return Excel::download(new UsersExport($type), $fileName);
     }
 }

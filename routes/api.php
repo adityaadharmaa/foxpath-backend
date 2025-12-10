@@ -7,11 +7,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Users\UsersController;
 use App\Services\Email\EmailVerificationServices;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
 Route::prefix('v1')->group(function(){
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -27,6 +25,10 @@ Route::prefix('v1')->group(function(){
             Route::get('/users', [UsersController::class, 'index'])->name('users.index');
             Route::post('/users', [UsersController::class, 'store'])->name('users.store');
             Route::patch('/users/{id}/role', [UsersController::class, 'updateRole'])->name('users.update.role');
+            Route::patch('/users/{id}/activate', [UsersController::class, 'activate'])->name('users.activate');
+            Route::patch('/users/{id}/deactivate', [UsersController::class, 'deactivate'])->name('users.deactivate');
+            Route::post('/users/{id}/resend-verification', [UsersController::class, 'resendVerification'])->name('users.resendverification');
+            Route::post('/users/export', [UsersController::class, 'export'])->name('users.export');
             // Users Route End
         
             // Roles Route Start
