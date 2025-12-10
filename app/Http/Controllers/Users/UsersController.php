@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Users\AdminResetUserPasswordRequest;
 use App\Http\Requests\Users\AdminStoreUserRequest;
 use App\Http\Requests\Users\AdminUpdateUserRoleRequest;
 use App\Http\Requests\Users\UsersExportRequest;
@@ -15,7 +16,7 @@ class UsersController extends Controller
     private $userService;
     public function __construct(UserService $userService)
     {
-        $this->userService = $userService; 
+        $this->userService = $userService;
     }
 
     public function index(UsersIndexRequest $request)
@@ -31,6 +32,26 @@ class UsersController extends Controller
     public function updateRole(AdminUpdateUserRoleRequest $request, string $id)
     {
         return $this->userService->updateRole($request, $id);
+    }
+
+    public function resetPassword(AdminResetUserPasswordRequest $request, string $id)
+    {
+        return $this->userService->resetPassword($request, $id);
+    }
+
+    public function destroy(string $id)
+    {
+        return $this->userService->softDelete($id);
+    }
+
+    public function restore(string $id)
+    {
+        return $this->userService->restore($id);
+    }
+
+    public function summary()
+    {
+        return $this->userService->summary();
     }
 
     public function activate(string $id)

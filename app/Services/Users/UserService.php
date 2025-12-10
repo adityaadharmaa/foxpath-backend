@@ -3,6 +3,7 @@
 namespace App\Services\Users;
 
 use App\Exports\Users\UsersExport;
+use App\Http\Requests\Users\AdminResetUserPasswordRequest;
 use App\Http\Requests\Users\AdminStoreUserRequest;
 use App\Http\Requests\Users\AdminUpdateUserRoleRequest;
 use App\Http\Requests\Users\UsersExportRequest;
@@ -182,6 +183,170 @@ class UserService
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
+    }
+
+    public function resetPassword(AdminResetUserPasswordRequest $request, string $id)
+    {
+        $data = $request->validated();
+
+        $user = User::withTrashed()->find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found.'
+            ], 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user->password = Hash::make($data['password']);
+            $user->save;
+
+            $user->tokens()->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User password has been reset successfully.',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email
+                    ],
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to reset user password.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    public function softDelete(string $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found.'
+            ], 404);
+        }
+
+        if ($user->trashed()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User already deleted.'
+            ], 200);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user->tokens()->delete();
+
+            $user->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User soft deleted successfully.'
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to reset user password.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    public function restore(string $id)
+    {
+        $user = User::onlyTrashed()->find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found.'
+            ], 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user->restore();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User restored successfully.',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'is_active' => $user->is_active
+                    ],
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to restore user.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    public function summary()
+    {
+        $totalUsers = User::count();
+        $totalActive = User::where('is_active', 1)->count();
+        $totalInactive = User::where('is_active', 0)->count();
+
+        $totalDeleted = User::onlyTrashed()->count();
+
+        $totalSiswa = User::join('profiles', 'users.id', '=', 'profiles.users_id')
+            ->where('profiles.applicant_type', 'siswa')
+            ->whereNull('users.deleted_at')
+            ->count();
+
+        $totalMahasiswa = User::join('profiles', 'users.id', '=', 'profiles.users_id')
+            ->where('profiles.applicant_type', 'mahasiswa')
+            ->whereNull('users.deleted_at')
+            ->count();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Users summary retrieved successfully.',
+            'data' => [
+                'totals' => [
+                    'users' => $totalUsers,
+                    'deleted_users' => $totalDeleted,
+                    'active' => $totalActive,
+                    'inactive' => $totalInactive
+                ],
+                'by_applicant_type' => [
+                    'siswa' => $totalSiswa,
+                    'mahasiswa' => $totalMahasiswa
+                ],
+            ],
+        ], 200);
     }
 
     public function activate(string $id)

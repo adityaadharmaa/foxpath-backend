@@ -10,37 +10,41 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function(){
+Route::prefix('v1')->group(function () {
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->name('login');
         Route::post('/register', [AuthController::class, 'register'])->name('register');
 
-        Route::middleware('auth:sanctum')->group(function(){
+        Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
     });
 
-    Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum', 'role:admin'])->group(function(){
-            // Users Route Start
-            Route::get('/users', [UsersController::class, 'index'])->name('users.index');
-            Route::post('/users', [UsersController::class, 'store'])->name('users.store');
-            Route::patch('/users/{id}/role', [UsersController::class, 'updateRole'])->name('users.update.role');
-            Route::patch('/users/{id}/activate', [UsersController::class, 'activate'])->name('users.activate');
-            Route::patch('/users/{id}/deactivate', [UsersController::class, 'deactivate'])->name('users.deactivate');
-            Route::post('/users/{id}/resend-verification', [UsersController::class, 'resendVerification'])->name('users.resendverification');
-            Route::post('/users/export', [UsersController::class, 'export'])->name('users.export');
-            // Users Route End
-        
-            // Roles Route Start
-            Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-            Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
-            Route::get('/roles/{id}', [RoleController::class, 'show'])->name('roles.show');
-            Route::patch('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
-            Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
-            // Roles Route End
+    Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        // Users Route Start
+        Route::get('/users', [UsersController::class, 'index'])->name('users.index');
+        Route::post('/users', [UsersController::class, 'store'])->name('users.store');
+        Route::post('/users/{id}/reset-password', [UsersController::class, 'resetPassword'])->name('users.reset-password');
+        Route::delete('/users/{id}', [UsersController::class, 'destroy'])->name('users.destroy');
+        Route::patch('/users/{id}/restore', [UsersController::class, 'restore'])->name('users.restore');
+        Route::get('/users/summary', [UsersController::class, 'summary'])->name('users.summary');
+        Route::patch('/users/{id}/role', [UsersController::class, 'updateRole'])->name('users.update.role');
+        Route::patch('/users/{id}/activate', [UsersController::class, 'activate'])->name('users.activate');
+        Route::patch('/users/{id}/deactivate', [UsersController::class, 'deactivate'])->name('users.deactivate');
+        Route::post('/users/{id}/resend-verification', [UsersController::class, 'resendVerification'])->name('users.resendverification');
+        Route::post('/users/export', [UsersController::class, 'export'])->name('users.export');
+        // Users Route End
+
+        // Roles Route Start
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+        Route::get('/roles/{id}', [RoleController::class, 'show'])->name('roles.show');
+        Route::patch('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
+        Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
+        // Roles Route End
     });
 
-    Route::middleware(['auth:sanctum'])->group(function(){
+    Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
     });
 
