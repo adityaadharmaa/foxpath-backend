@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Program\ProgramController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Users\UsersController;
 use App\Services\Email\EmailVerificationServices;
@@ -42,6 +43,14 @@ Route::prefix('v1')->group(function () {
         Route::patch('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
         Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
         // Roles Route End
+
+        // Programs Routes Start
+        Route::apiResource('programs', ProgramController::class);
+        Route::get('programs', [ProgramController::class, 'adminIndex']);
+        Route::patch('programs/{id}/toggle', [ProgramController::class, 'toggleActive'])->name('programs.activate');
+        Route::get('programs/{id}/stats', [ProgramController::class, 'stats'])->name('programs.stats');
+        Route::get('programs/export', [ProgramController::class, 'export'])->name('programs.export');
+        // Programs Routes End
     });
 
     Route::middleware(['auth:sanctum'])->group(function () {
