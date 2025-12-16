@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Program extends Model
 {
+    use SoftDeletes;
+    
     public $timestamps = true;
     protected $fillable = [
         'name',
@@ -24,4 +27,9 @@ class Program extends Model
         'cohort_starts_at' => 'datetime',
         'is_active' => 'boolean'
     ];
+
+    public function applications()
+    {
+        return $this->hasMany(InternshipApplication::class);
+    }
 }

@@ -46,7 +46,6 @@ Route::prefix('v1')->group(function () {
 
         // Programs Routes Start
         Route::apiResource('programs', ProgramController::class);
-        Route::get('programs', [ProgramController::class, 'adminIndex']);
         Route::patch('programs/{id}/toggle', [ProgramController::class, 'toggleActive'])->name('programs.activate');
         Route::get('programs/{id}/stats', [ProgramController::class, 'stats'])->name('programs.stats');
         Route::get('programs/export', [ProgramController::class, 'export'])->name('programs.export');
