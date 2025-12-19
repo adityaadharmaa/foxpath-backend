@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Criteria\CriteriaController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Program\ProgramController;
@@ -52,6 +53,10 @@ Route::prefix('v1')->group(function () {
         Route::patch('programs/{id}/toggle', [ProgramController::class, 'activate'])->name('programs.activate');
         Route::patch('programs/{id}/restore', [ProgramController::class, 'restore'])->name('programs.restore');
         // Programs Routes End
+
+        // Criteria Routes Start
+        Route::get('/criterias', [CriteriaController::class, 'index'])->name('criterias.index');
+        // Criteria Routes End
     });
 
     Route::middleware(['auth:sanctum'])->group(function () {
