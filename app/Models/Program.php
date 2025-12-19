@@ -8,15 +8,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Program extends Model
 {
     use SoftDeletes;
-    
+
     public $timestamps = true;
     protected $fillable = [
-        'name',
+        'name', 
         'description',
         'capacity',
         'registration_starts_at',
         'registration_ends_at',
-        'cohot_starts_at',
+        'cohort_starts_at',
         'placement_duration_months',
         'is_active',
     ];
@@ -28,8 +28,10 @@ class Program extends Model
         'is_active' => 'boolean'
     ];
 
+    protected $dates = ['deleted_at'];
+
     public function applications()
     {
-        return $this->hasMany(InternshipApplication::class);
+        return $this->hasMany(InternshipApplication::class, 'programs_id');
     }
 }

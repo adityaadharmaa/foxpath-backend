@@ -45,15 +45,22 @@ Route::prefix('v1')->group(function () {
         // Roles Route End
 
         // Programs Routes Start
-        Route::apiResource('programs', ProgramController::class);
-        Route::patch('programs/{id}/toggle', [ProgramController::class, 'toggleActive'])->name('programs.activate');
+        Route::apiResource('programs', ProgramController::class)->except('show');
+        Route::get('programs/summary', [ProgramController::class, 'summary'])->name('programs.summary');
         Route::get('programs/{id}/stats', [ProgramController::class, 'stats'])->name('programs.stats');
-        Route::get('programs/export', [ProgramController::class, 'export'])->name('programs.export');
+        Route::post('programs/export', [ProgramController::class, 'export'])->name('programs.export');
+        Route::patch('programs/{id}/toggle', [ProgramController::class, 'activate'])->name('programs.activate');
+        Route::patch('programs/{id}/restore', [ProgramController::class, 'restore'])->name('programs.restore');
         // Programs Routes End
     });
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+    });
+
+    Route::prefix('user')->name('user.')->middleware(['auth:sanctum'])->group(function () {
+        Route::get('/profile', [ProfileController::class, 'getProfile'])->name('profile.get');
+        Route::get('programs', [ProgramController::class, 'index'])->name('user.programs-index');
     });
 
     Route::post('/email/resend', function (Request $request) {

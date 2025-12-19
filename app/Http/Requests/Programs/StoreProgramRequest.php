@@ -27,9 +27,18 @@ class StoreProgramRequest extends FormRequest
             'capacity' => ['nullable', 'integer', 'min:0'],
             'registration_starts_at' => ['nullable', 'date'],
             'registration_ends_at' => ['nullable', 'date', 'after_or_equal:registration_starts_at'],
-            'cohot_starts_at' => ['nullable', 'date'],
-            'placement_duration_months' => ['nullable', 'integer', 'min:1'],
+            'cohort_starts_at' => ['nullable', 'date'],
+            'placement_duration_months' => ['nullable', 'integer', 'min:1', 'max:24'],
             'is_active' => ['boolean'],
+        ];
+    }
+
+    public function messages() : array
+    {
+        return [
+           'name.required' => 'Program name is required.',
+           'registration_ends_at.after_or_equal' => 'Registration end date must be after start date.',
+           'capacity.min' => 'Capacity cannot be negative.',
         ];
     }
 }
