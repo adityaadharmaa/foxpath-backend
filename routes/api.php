@@ -55,7 +55,7 @@ Route::prefix('v1')->group(function () {
         // Programs Routes End
 
         // Criteria Routes Start
-        Route::get('/criterias', [CriteriaController::class, 'index'])->name('criterias.index');
+        Route::apiResource('criteria', CriteriaController::class);
         // Criteria Routes End
     });
 
