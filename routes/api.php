@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Applicants\ApplicationScoreController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Criteria\CriteriaController;
 use App\Http\Controllers\EmailVerificationController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Users\UsersController;
 use App\Services\Email\EmailVerificationServices;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
@@ -60,6 +62,10 @@ Route::prefix('v1')->group(function () {
         Route::patch('criteria/{id}/toggle', [CriteriaController::class, 'toggle'])->name('criteria.activate');
         Route::post('criteria/export', [CriteriaController::class, 'export'])->name('criteria.export');
         // Criteria Routes End
+
+        // Routes Application Scores Start
+        Route::post('applicants/{application}/score', [ApplicationScoreController::class, 'store'])->name('applicants.application.score.store');
+        // Routes Application Scores End
     });
 
     Route::middleware(['auth:sanctum'])->group(function () {
