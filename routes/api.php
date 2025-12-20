@@ -48,7 +48,7 @@ Route::prefix('v1')->group(function () {
         // Programs Routes Start
         Route::apiResource('programs', ProgramController::class)->except('show');
         Route::get('programs/summary', [ProgramController::class, 'summary'])->name('programs.summary');
-        Route::get('programs/{id}/stats', [ProgramController::class, 'stats'])->name('programs.stats');
+        // Route::get('programs/{id}/stats', [ProgramController::class, 'stats'])->name('programs.stats');
         Route::post('programs/export', [ProgramController::class, 'export'])->name('programs.export');
         Route::patch('programs/{id}/toggle', [ProgramController::class, 'activate'])->name('programs.activate');
         Route::patch('programs/{id}/restore', [ProgramController::class, 'restore'])->name('programs.restore');
@@ -56,6 +56,9 @@ Route::prefix('v1')->group(function () {
 
         // Criteria Routes Start
         Route::apiResource('criteria', CriteriaController::class);
+        Route::patch('criteria/{id}/restore', [CriteriaController::class, 'restore'])->name('criteria.restore');
+        Route::patch('criteria/{id}/toggle', [CriteriaController::class, 'toggle'])->name('criteria.activate');
+        Route::post('criteria/export', [CriteriaController::class, 'export'])->name('criteria.export');
         // Criteria Routes End
     });
 

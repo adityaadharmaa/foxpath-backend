@@ -4,7 +4,7 @@ namespace App\Http\Requests\Criterias;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CriteriaIndexRequest extends FormRequest
+class CriteriaExportRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,11 +22,8 @@ class CriteriaIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'q' => ['nullable', 'string'],
+            'format' => ['required', 'in:xlsx,csv,ods'],
             'is_active' => ['nullable', 'boolean'],
-            'include_deleted' => ['nullable', 'boolean'],
-            'deleted_only' => ['nullable', 'boolean'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 }
