@@ -30,4 +30,9 @@ class InternshipApplication extends Model
     {
         return $this->belongsTo(User::class, 'users_id');
     }
+
+    public function documents()
+    {
+        return $this->hasMany(ApplicationDocument::class, 'internship_applications_id');
+    }
 }

@@ -1,9 +1,10 @@
 <?php
 
 use App\Http\Controllers\Applicants\ApplicationScoreController;
+use App\Http\Controllers\ApplicationDocument\ApplicationDocumentController;
+use App\Http\Controllers\ApplicationDocument\ApplicationDocumentStatusController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Criteria\CriteriaController;
-use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\InternshipApplication\InternshipApplicationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Program\ProgramController;
@@ -11,8 +12,6 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Users\UsersController;
 use App\Services\Email\EmailVerificationServices;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -78,6 +77,9 @@ Route::prefix('v1')->group(function () {
     Route::prefix('user')->name('user.')->middleware(['auth:sanctum'])->group(function () {
         Route::get('/profile', [ProfileController::class, 'getProfile'])->name('profile.get');
         Route::get('programs', [ProgramController::class, 'index'])->name('user.programs-index');
+        Route::post('/applications', [InternshipApplicationController::class, 'store'])->name('applications.store');
+        Route::post('/applications/{application}/documents', [ApplicationDocumentController::class, 'store'])->name('applications.documents.upload');
+        Route::get('/applications/{application}/document-status', [ApplicationDocumentStatusController::class, 'show'])->name('applications.documents.status');
     });
 
     Route::post('/email/resend', function (Request $request) {
