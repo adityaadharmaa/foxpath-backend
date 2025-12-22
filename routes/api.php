@@ -4,6 +4,7 @@ use App\Http\Controllers\Applicants\ApplicationScoreController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Criteria\CriteriaController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\InternshipApplication\InternshipApplicationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Program\ProgramController;
 use App\Http\Controllers\RoleController;
@@ -63,9 +64,11 @@ Route::prefix('v1')->group(function () {
         Route::post('criteria/export', [CriteriaController::class, 'export'])->name('criteria.export');
         // Criteria Routes End
 
-        // Routes Application Scores Start
-        Route::post('applicants/{application}/score', [ApplicationScoreController::class, 'store'])->name('applicants.application.score.store');
-        // Routes Application Scores End
+        // Routes Application Start
+        Route::post('/applications/{id}/score', [ApplicationScoreController::class, 'store'])->name('applicants.application.score.store');
+        Route::patch('/applications/{id}/status', [InternshipApplicationController::class, 'updateStatus'])->name('applicants.application.status.update');
+        // Routes Application End
+
     });
 
     Route::middleware(['auth:sanctum'])->group(function () {

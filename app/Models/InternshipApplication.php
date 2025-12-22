@@ -8,9 +8,12 @@ class InternshipApplication extends Model
 {
     protected $fillable = [
         'programs_id',
-        'profiles_id',
+        'users_id',
         'status',
         'submitted_at',
+        'verified_at',
+        'scored_at',
+        'decided_at',
         'final_score',
         'rank',
         'admitted_at',
@@ -20,11 +23,11 @@ class InternshipApplication extends Model
 
     public function program()
     {
-        return $this->belongsTo(Program::class);
+        return $this->belongsTo(Program::class, 'programs_id');
     }
 
-    public function profile()
+    public function user()
     {
-        return $this->belongsTo(Profile::class);
+        return $this->belongsTo(User::class, 'users_id');
     }
 }
