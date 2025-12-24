@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Criteria\CriteriaController;
 use App\Http\Controllers\InternshipApplication\InternshipApplicationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProfileEducation\ProfileEducationController;
 use App\Http\Controllers\Program\ProgramController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Users\UsersController;
@@ -79,7 +80,12 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('user')->name('user.')->middleware(['auth:sanctum'])->group(function () {
         Route::get('/profile', [ProfileController::class, 'getProfile'])->name('profile.get');
-         Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+        Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+
+        Route::get('/profile/educations', [ProfileEducationController::class, 'show'])->name('profiles.education.get');
+        Route::post('/profile/educations', [ProfileEducationController::class, 'store'])->name('profiles.education.store');
+        // Route::patch('/profile/educations/{education}', [ProfileEducationController::class, 'update'])->name('profiles.education.update');
+        // Route::delete('/profile/educations/{education}', [ProfileEducationController::class, 'destroy'])->name('profiles.education.delete');
         Route::get('programs', [ProgramController::class, 'index'])->name('user.programs-index');
         Route::post('/applications', [InternshipApplicationController::class, 'store'])->name('applications.store');
         Route::post('/applications/{application}/documents', [ApplicationDocumentController::class, 'store'])->name('applications.documents.upload');

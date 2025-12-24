@@ -38,7 +38,34 @@ class InternshipApplicationService
             }
         }
 
+        $education = $profile->activeEducation;
+
+        if(!$education)
+        {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please complete your education data.'
+            ], 422);
+        }
+
+        if($profile->applicant_type === 'mahasiswa' && empty($education->gpa))
+        {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'GPA (IPK) is required for university students.'
+            ], 422);
+        }
+
+        if($profile->applicant_type === 'siswa' && empty($education->average_score))
+        {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Average report score is required for students.'
+            ], 422);
+        }
+
         DB::beginTransaction();
+        
         try{
             $program = Program::where('id', $programId)
                 ->where('is_active', true)

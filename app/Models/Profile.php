@@ -21,4 +21,15 @@ class Profile extends Model
     {
         return $this->belongsTo(User::class, 'users_id', 'id');
     }
+
+    function educations()
+    {
+        return $this->hasMany(ProfileEducation::class, 'profiles_id');
+    }
+
+    function activeEducation()
+    {
+        return $this->hasOne(ProfileEducation::class, 'profiles_id')
+        ->where('is_active', true);
+    }
 }
