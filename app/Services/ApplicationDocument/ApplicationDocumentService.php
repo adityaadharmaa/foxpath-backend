@@ -3,18 +3,34 @@
 namespace App\Services\ApplicationDocument;
 use App\Models\ApplicationDocument;
 use App\Models\InternshipApplication;
+use App\Services\InternshipApplication\InternshipApplicationStatusService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ApplicationDocumentService
 {
+    public function __construct(
+        protected InternshipApplicationStatusService $statusService
+    )
+    {}
+
     public function upload(
-        InternshipApplication|int $application,
+        int $applicationId,
         string $type,
         UploadedFile $file,
         int $userId
     ) {
+        $application = InternshipApplication::with('documents')
+        ->find($applicationId);
+
+        if(!$application)
+        {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Application not found.'
+            ], 404);
+        }
 
         if($application->users_id !== (int) $userId) {
             return response()->json([
@@ -33,6 +49,7 @@ class ApplicationDocumentService
         }
 
         DB::beginTransaction();
+
         try{
             $existing = $application->documents()
             ->where('type', $type)
@@ -48,16 +65,16 @@ class ApplicationDocumentService
                 'public'
             );
 
-            // dd($path->file('file')->getMimeType());
-
             $document = $application->documents()->create([
                 'type' => $type,
                 'file_path' => $path,
                 'original_name' => $file->getClientOriginalName(),
                 'mime_type' => $file->getClientMimeType(),
                 'size' => $file->getSize(),
-
+                'status' => 'pending'
             ]);
+
+            // $this->statusService->autoVerifyIfEligible($application->fresh());
 
             DB::commit();
 
@@ -65,7 +82,8 @@ class ApplicationDocumentService
                 'status' => 'success',
                 'message' => 'Document uploaded successfully',
                 'data' => [
-                    'document' => $document
+                    'document' => $document,
+                    'application_status' => $application->fresh()->status
                 ]
             ], 201);
         } catch (\Exception $e)

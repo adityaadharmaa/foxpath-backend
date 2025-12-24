@@ -9,13 +9,25 @@ class ApplicationDocument extends Model
     protected $fillable = [
         'internship_applications_id',
         'type',
+        'status',
+        'review_note',
         'file_path',
         'original_name',
         'mime_type',
         'size',
-        'is_verified',
-        'verified_at',
-        'verified_by',
-        'verification_notes'
+        'reviewed_at',
+        'reviewed_by'
     ];
+
+    public function application()
+    {
+        return $this->belongsTo(
+            InternshipApplication::class, 'internship_applications_id'
+        );
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
 }

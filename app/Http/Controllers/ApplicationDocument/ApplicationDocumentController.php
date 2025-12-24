@@ -15,12 +15,14 @@ class ApplicationDocumentController extends Controller
     )
     {}
 
-    public function store(StoreApplicationDocumentRequest $request, InternshipApplication $application)
+    public function store(
+        StoreApplicationDocumentRequest $request, 
+        int $applicationId)
     {
         $file = $request->file('file');
         
        return $this->documentService->upload(
-        $application,
+        $applicationId,
         $request->validated()['type'],
         $request->file('file'),
         $request->user()->id

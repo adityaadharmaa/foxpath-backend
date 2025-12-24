@@ -23,15 +23,16 @@ class InternshipApplicationService
                 ], 404);
             }
 
-            $exists = InternshipApplication::where('programs_id', $programId)
+            $activeExists = InternshipApplication::where('programs_id', $programId)
                 ->where('users_id', $userId)
+                ->where('is_final', false)
                 ->exists();
 
-            if($exists)
+            if($activeExists)
             {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'You have already applied for this program'
+                    'message' => 'You have an active application for this program'
                 ], 409);
             }
 
@@ -39,7 +40,8 @@ class InternshipApplicationService
                 'programs_id' => $programId,
                 'users_id' => $userId,
                 'status' => 'submitted',
-                'submitted_at' => now()
+                'submitted_at' => now(),
+                'is_final' => 'false'
             ]);
 
             DB::commit();
@@ -76,15 +78,26 @@ class InternshipApplicationService
         DB::beginTransaction();
 
         try {
-            $application->status = $status;
 
             $now = now();
 
             match ($status) {
-                'verified' => $application->verified_at = $now,
-                'accepted' => $application->decided_at = $now,
-                'rejected' => $application->decided_at = $now,
-                default => null,
+                'verified' => $application->update([
+                    'status' => 'verified',
+                    'verified_at' => $now
+                ]),
+
+                'accepted' => $application->update([
+                    'status' => 'accepted',
+                    'is_final' => true,
+                    'verified_at' => $now
+                ]),
+
+                'rejected' => $application->update([
+                    'status' => 'rejected',
+                    'is_final' => true,
+                    'verified_at' => $now
+                ])
             };
 
             $application->save();

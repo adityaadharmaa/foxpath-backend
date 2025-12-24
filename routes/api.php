@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Applicants\ApplicationScoreController;
 use App\Http\Controllers\ApplicationDocument\ApplicationDocumentController;
+use App\Http\Controllers\ApplicationDocument\ApplicationDocumentReviewController;
 use App\Http\Controllers\ApplicationDocument\ApplicationDocumentStatusController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Criteria\CriteriaController;
@@ -67,6 +68,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/applications/{id}/score', [ApplicationScoreController::class, 'store'])->name('applicants.application.score.store');
         Route::patch('/applications/{id}/status', [InternshipApplicationController::class, 'updateStatus'])->name('applicants.application.status.update');
         // Routes Application End
+
+        Route::patch('/documents/{id}/review', [ApplicationDocumentReviewController::class, 'review'])->name('document.review');
 
     });
 

@@ -14,21 +14,11 @@ class ApplicationDocumentStatusController extends Controller
     )
     {}
 
-    public function show(InternshipApplication $application)
+    public function show(int $applicationId)
     {
-        if($application->users_id !== auth()->id()){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized application access.'
-            ], 403);
-        }
-
-        $result = $this->documentStatusService->checkCompleteness($application);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Document status retrieved successfully.',
-            'data' => $result
-        ]);
+        return $this->documentStatusService->checkCompleteness(
+            $applicationId,
+            auth()->id()
+        );
     }
 }

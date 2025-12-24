@@ -35,4 +35,16 @@ class InternshipApplication extends Model
     {
         return $this->hasMany(ApplicationDocument::class, 'internship_applications_id');
     }
+
+    public function hasCompleteDocuments()
+    {
+        $requiredTypes = ['cv', 'transcript'];
+
+        $uploadedTypes = $this->documents()
+        ->pluck('type')
+        ->unique()
+        ->toArray();
+
+        return empty(array_diff($requiredTypes, $uploadedTypes));
+    }
 }
