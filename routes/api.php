@@ -79,6 +79,7 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('user')->name('user.')->middleware(['auth:sanctum'])->group(function () {
         Route::get('/profile', [ProfileController::class, 'getProfile'])->name('profile.get');
+         Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
         Route::get('programs', [ProgramController::class, 'index'])->name('user.programs-index');
         Route::post('/applications', [InternshipApplicationController::class, 'store'])->name('applications.store');
         Route::post('/applications/{application}/documents', [ApplicationDocumentController::class, 'store'])->name('applications.documents.upload');

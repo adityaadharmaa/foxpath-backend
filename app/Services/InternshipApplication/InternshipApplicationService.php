@@ -2,6 +2,7 @@
 
 namespace App\Services\InternshipApplication;
 use App\Models\InternshipApplication;
+use App\Models\Profile;
 use App\Models\Program;
 use Illuminate\Support\Facades\DB;
 
@@ -9,6 +10,34 @@ class InternshipApplicationService
 {
     public function store(int $userId, int $programId)
     {
+        $profile = Profile::where('users_id', $userId)->first();
+
+        if(!$profile){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please complete your profile before applying.'
+            ], 422);
+        }
+
+        $requiredFields = [
+            'applicant_type',
+            'full_name',
+            'date_of_birth',
+            'phone',
+            'address'
+        ];
+
+        foreach($requiredFields as $field)
+        {
+            if(!isset($profile->$field) || trim((string)$profile->$field) === ''){
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Your profile is incomplete.',
+                    'missing_field' => $field
+                ], 422);
+            }
+        }
+
         DB::beginTransaction();
         try{
             $program = Program::where('id', $programId)

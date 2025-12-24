@@ -17,7 +17,6 @@ class ProfileServices
 
       $required = [
         'applicant_type',
-        'student_identifier',
         'full_name',
         'phone',
         'address',
@@ -30,23 +29,22 @@ class ProfileServices
         }
       }
 
-      if($data['applicant_type'] === 'siswa'){
-         // NISN 10–12 digit
-          if (!preg_match('/^[0-9]{10,12}$/', $data['student_identifier'])) {
-              throw new \Exception("NISN tidak valid (harus 10–12 digit).");
-          }
-      }
+      // if($data['applicant_type'] === 'siswa'){
+      //    // NISN 10–12 digit
+      //     if (!preg_match('/^[0-9]{10,12}$/', $data['student_identifier'])) {
+      //         throw new \Exception("NISN tidak valid (harus 10–12 digit).");
+      //     }
+      // }
 
-      if($data['applicant_type'] === 'mahasiswa'){
-          // NIM alfanumerik (panjang 5–20)
-          if (!preg_match('/^[A-Za-z0-9]{5,20}$/', $data['student_identifier'])) {
-              throw new \Exception("NIM tidak valid.");
-          }
-      }
+      // if($data['applicant_type'] === 'mahasiswa'){
+      //     // NIM alfanumerik (panjang 5–20)
+      //     if (!preg_match('/^[A-Za-z0-9]{5,20}$/', $data['student_identifier'])) {
+      //         throw new \Exception("NIM tidak valid.");
+      //     }
+      // }
 
       $profile->update([
         'applicant_type' => $data['applicant_type'],
-        'student_identifier' => $data['student_identifier'],
         'full_name' => $data['full_name'],
         'phone' => $data['phone'],
         'address' => $data['address'],

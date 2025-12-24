@@ -9,11 +9,11 @@ class Profile extends Model
     protected $fillable = [
         'users_id',
         'applicant_type',
-        'student_identifier',
         'full_name',
         'phone',
         'address',
         'bio',
+        'profile_picture',
         'date_of_birth'
     ];
 
