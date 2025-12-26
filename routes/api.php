@@ -16,6 +16,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SAW\SAWController;
 use App\Http\Controllers\Users\UsersController;
 use App\Services\Email\EmailVerificationServices;
+use App\Services\InternshipApplication\InternshipApplicationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -93,6 +94,8 @@ Route::prefix('v1')->group(function () {
         // Route::patch('/profile/educations/{education}', [ProfileEducationController::class, 'update'])->name('profiles.education.update');
         // Route::delete('/profile/educations/{education}', [ProfileEducationController::class, 'destroy'])->name('profiles.education.delete');
         Route::get('programs', [ProgramController::class, 'index'])->name('user.programs-index');
+        Route::get('/applications', [InternshipApplicationController::class, 'index'])->name('applications.info');
+        Route::get('/applications/{id}', [InternshipApplicationController::class, 'show'])->name('applications.info');
         Route::post('/applications', [InternshipApplicationController::class, 'store'])->name('applications.store');
         Route::post('/applications/{application}/documents', [ApplicationDocumentController::class, 'store'])->name('applications.documents.upload');
         Route::get('/applications/{application}/document-status', [ApplicationDocumentStatusController::class, 'show'])->name('applications.documents.status');

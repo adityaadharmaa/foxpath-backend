@@ -14,6 +14,18 @@ class InternshipApplicationController extends Controller
     )
     {}
 
+    public function index()
+    {
+        $userId = auth()->id();
+        return $this->applicationService->index($userId);
+    }
+
+    public function show(int $id)
+    {
+        $userId = auth()->id();
+        return $this->applicationService->show($id, $userId);
+    }
+
     public function store(StoreInternshipApplicationRequest $request)
     {
         return $this->applicationService->store(

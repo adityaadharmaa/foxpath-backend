@@ -27,6 +27,15 @@ class InternshipApplication extends Model
         return $this->belongsTo(Program::class, 'programs_id');
     }
 
+    public function scores()
+    {
+        return $this->hasMany(
+            ApplicationScore::class,
+            'internship_applications_id',
+            'id'
+        );
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'users_id');

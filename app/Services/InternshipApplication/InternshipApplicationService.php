@@ -178,4 +178,77 @@ class InternshipApplicationService
             ], 500);
         }
     }
+
+    public function index(int $userId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $applications = InternshipApplication::with([
+                'program:id,name',
+            ])
+            ->where('users_id', $userId)
+            ->latest()
+            ->get();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Application history retrieved successfully.',
+                'data' => $applications
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve application history.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    public function show(int $applicationId, int $userId)
+    {
+        DB::beginTransaction();
+
+        try {
+            $application = InternshipApplication::with([
+                'program',
+                'scores.criteria',
+                'documents'
+            ])
+            ->where('id', $applicationId)
+            ->where('users_id', $userId)
+            ->first();
+
+            if (!$application) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Application not found.'
+                ], 404);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Application detail retrieved successfully.',
+                'data' => $application
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve application detail.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 }
