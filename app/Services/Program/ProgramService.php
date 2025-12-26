@@ -6,6 +6,7 @@ use App\Exports\Programs\ProgramsExport;
 use App\Http\Requests\Programs\ProgramIndexRequest;
 use App\Http\Requests\Programs\StoreProgramRequest;
 use App\Http\Requests\Programs\UpdateProgramRequest;
+use App\Models\InternshipApplication;
 use App\Models\Program;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -93,6 +94,55 @@ class ProgramService
             ],
         ],
     ], 200);
+  }
+
+  public function getApplicantsByProgram(int $programId, ?string $status = null, ?string $result = null){
+    DB::beginTransaction();
+
+    try{
+      $query = InternshipApplication::with([
+                'user:id,email',
+                'user.profile:id,users_id,full_name,applicant_type',
+                'user.profileEducation',
+                'scores.criteria:id,name,weight',
+            ])
+            ->where('programs_id', $programId);
+
+            // Filter status (submitted, verified, scored)
+            if ($status) {
+                $query->where('status', $status);
+            }
+
+            // Filter hasil akhir
+            if ($result === 'accepted') {
+                $query->where('status', 'accepted');
+            }
+
+            if ($result === 'rejected') {
+                $query->where('status', 'rejected');
+            }
+
+            $applications = $query
+                ->orderBy('rank')
+                ->get();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Applicants retrieved successfully.',
+                'data' => $applications
+            ], 200);
+
+    } catch (\Exception $e) {
+      DB::rollBack();
+
+      return response()->json([
+        'status' => 'error',
+        'message' => 'Failed to retrive applicants.',
+        'error' => config('app.debug') ? $e->getMessage() : 'Internal server error.'
+      ], 500);
+    }
   }
 
   public function store(StoreProgramRequest $request)

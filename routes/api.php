@@ -56,6 +56,7 @@ Route::prefix('v1')->group(function () {
         // Programs Routes Start
         Route::apiResource('programs', ProgramController::class)->except('show');
         Route::get('programs/summary', [ProgramController::class, 'summary'])->name('programs.summary');
+        Route::get('programs/{program}/applicants', [ProgramController::class, 'applicants'])->name('programs.applicants.applicants');
         // Route::get('programs/{id}/stats', [ProgramController::class, 'stats'])->name('programs.stats');
         Route::post('programs/export', [ProgramController::class, 'export'])->name('programs.export');
         Route::post('programs/{id}/decide', [ApplicationDecisionController::class, 'decide'])->name('programs.decided');

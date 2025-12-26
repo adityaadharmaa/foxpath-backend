@@ -20,6 +20,11 @@ class ProgramController extends Controller
         return $this->programService->index($request);
     }
 
+    public function applicants(Request $request, int $programId)
+    {
+        return $this->programService->getApplicantsByProgram($programId, $request->query('status'), $request->query('result'));
+    }
+
     public function store(StoreProgramRequest $request)
     {
         return $this->programService->store($request);
