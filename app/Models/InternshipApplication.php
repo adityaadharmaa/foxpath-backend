@@ -15,6 +15,7 @@ class InternshipApplication extends Model
         'scored_at',
         'decided_at',
         'final_score',
+        'is_final',
         'rank',
         'admitted_at',
         'placement_start_at',

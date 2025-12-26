@@ -17,6 +17,7 @@ class AuthServices
   {
     $this->emailService = $emailService;
   }
+  
   public function login(LoginReguest $request)
   {
    $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL)

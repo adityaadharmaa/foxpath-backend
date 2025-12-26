@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Applicants\ApplicationDecisionController;
+use App\Http\Controllers\Applicants\ApplicationPlacementController;
 use App\Http\Controllers\Applicants\ApplicationScoreController;
 use App\Http\Controllers\ApplicationDocument\ApplicationDocumentController;
 use App\Http\Controllers\ApplicationDocument\ApplicationDocumentReviewController;
@@ -11,6 +13,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileEducation\ProfileEducationController;
 use App\Http\Controllers\Program\ProgramController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SAW\SAWController;
 use App\Http\Controllers\Users\UsersController;
 use App\Services\Email\EmailVerificationServices;
 use Illuminate\Http\Request;
@@ -54,8 +57,10 @@ Route::prefix('v1')->group(function () {
         Route::get('programs/summary', [ProgramController::class, 'summary'])->name('programs.summary');
         // Route::get('programs/{id}/stats', [ProgramController::class, 'stats'])->name('programs.stats');
         Route::post('programs/export', [ProgramController::class, 'export'])->name('programs.export');
+        Route::post('programs/{id}/decide', [ApplicationDecisionController::class, 'decide'])->name('programs.decided');
         Route::patch('programs/{id}/toggle', [ProgramController::class, 'activate'])->name('programs.activate');
         Route::patch('programs/{id}/restore', [ProgramController::class, 'restore'])->name('programs.restore');
+        Route::post('programs/{id}/calculate-saw', [SAWController::class, 'calculate'])->name('programs.saw-calculate');
         // Programs Routes End
 
         // Criteria Routes Start
@@ -68,6 +73,7 @@ Route::prefix('v1')->group(function () {
         // Routes Application Start
         Route::post('/applications/{id}/score', [ApplicationScoreController::class, 'store'])->name('applicants.application.score.store');
         Route::patch('/applications/{id}/status', [InternshipApplicationController::class, 'updateStatus'])->name('applicants.application.status.update');
+        Route::patch('/applications/{id}/placement', [ApplicationPlacementController::class, 'update'])->name('applications.placement');
         // Routes Application End
 
         Route::patch('/documents/{id}/review', [ApplicationDocumentReviewController::class, 'review'])->name('document.review');

@@ -3,10 +3,16 @@
 namespace App\Services\ApplicationDocument;
 
 use App\Models\ApplicationDocument;
+use App\Services\ApplicationScore\AcademicScoreService;
 use Illuminate\Support\Facades\DB;
 
 class ApplicationDocumentReviewService
 {
+    public function __construct(
+        protected AcademicScoreService $academic
+    )
+    {}
+
     public function review(
         int $documentId, 
         string $status,
@@ -65,6 +71,8 @@ class ApplicationDocumentReviewService
                     'status' => 'verified',
                     'verified_at' => now()
                 ]);
+
+                $this->academic->sync($application->fresh());
             }
 
             DB::commit();
