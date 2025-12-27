@@ -179,7 +179,7 @@ class AuthServices
         "/reset-password?token={$token}&email={$email}";
 
       Mail::to($email)->queue(
-        new ResetPasswordMail($user, $resetUrl)
+        new ResetPasswordMail($user, $resetUrl)->onQueue('emails')
       );
 
       DB::commit();

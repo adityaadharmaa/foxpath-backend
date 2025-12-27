@@ -24,7 +24,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->name('login');
         Route::post('/register', [AuthController::class, 'register'])->name('register');
-
+        Route::post('/forgot-password', AuthController::class);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
@@ -79,7 +79,6 @@ Route::prefix('v1')->group(function () {
         // Routes Application End
 
         Route::patch('/documents/{id}/review', [ApplicationDocumentReviewController::class, 'review'])->name('document.review');
-
     });
 
     Route::middleware(['auth:sanctum'])->group(function () {
