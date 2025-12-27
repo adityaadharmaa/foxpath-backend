@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('internship_applications', function (Blueprint $table) {
-            $table->dropColumn('is_final');
+            // $table->dropColumn('is_final');
             $table->boolean('is_final')->default(false)->after('final_score')->index();
         });
     }
