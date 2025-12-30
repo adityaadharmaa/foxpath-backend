@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Mail\ResetPasswordMail;
 use App\Models\PasswordResetToken;
 use App\Models\User;
+use App\Notifications\ResetPasswordQueued;
 use App\Services\Email\EmailVerificationServices;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Hash;
@@ -151,45 +152,53 @@ class AuthServices
 
   public function sendResetLink(string $email)
   {
-    DB::beginTransaction();
+     DB::beginTransaction();
 
     try {
-      $user = User::where('email', $email)->first();
+        $user = User::where('email', $email)->first();
 
-      if (!$user) {
+        // Anti email enumeration
+        if (!$user) {
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'If the email is registered, a password reset link has been sent',
+            ]);
+        }
+
+        PasswordResetToken::where('email', $email)->delete();
+
+        $token = Str::random(64);
+
+        PasswordResetToken::create([
+            'email' => $email,
+            'token' => Hash::make($token),
+            'created_at' => now(),
+        ]);
+
+        // ✅ DB SELESAI DULU
         DB::commit();
 
+        // 📧 EMAIL SETELAH COMMIT (SAMA SEPERTI REGISTER)
+        $resetUrl = config('app.frontend_url')
+            . "/reset-password?token={$token}&email={$email}";
+
+        $user->refresh()->notify(
+            new ResetPasswordQueued($resetUrl)
+        );
+
         return response()->json([
-          'status' => 'success',
-          'message' => 'If the email is registered, a password reset link has been sent'
+            'status' => 'success',
+            'message' => 'If the email is registered, a password reset link has been sent',
         ]);
-      }
-
-      PasswordResetToken::where('email', $email)->delete();
-
-      $token = Str::random(64);
-
-      PasswordResetToken::create([
-        'email' => $email,
-        'token' => Hash::make($token),
-        'created_at' => now()
-      ]);
-
-      $resetUrl = config('app.frontend_url') .
-        "/reset-password?token={$token}&email={$email}";
-
-      Mail::to($email)->queue(
-        new ResetPasswordMail($user, $resetUrl)->onQueue('emails')
-      );
-
-      DB::commit();
-
-      return response()->json([
-        'status' => 'success',
-        'message' => 'If the email is registered, a password reset link has been sent'
-      ]);
     } catch (\Exception $e) {
       DB::rollBack();
+
+       logger()->error('FORGOT PASSWORD ERROR', [
+          'message' => $e->getMessage(),
+          'trace' => $e->getTraceAsString(),
+        ]);
 
       return response()->json([
         'status' => 'error',
