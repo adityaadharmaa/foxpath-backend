@@ -7,8 +7,11 @@ use App\Http\Controllers\ApplicationDocument\ApplicationDocumentController;
 use App\Http\Controllers\ApplicationDocument\ApplicationDocumentReviewController;
 use App\Http\Controllers\ApplicationDocument\ApplicationDocumentStatusController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Criteria\CriteriaController;
 use App\Http\Controllers\InternshipApplication\InternshipApplicationController;
+use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileEducation\ProfileEducationController;
 use App\Http\Controllers\Program\ProgramController;
@@ -24,7 +27,8 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->name('login');
         Route::post('/register', [AuthController::class, 'register'])->name('register');
-        Route::post('/forgot-password', AuthController::class);
+        Route::post('/forgot-password', ForgotPasswordController::class);
+        Route::post('/reset-password', ResetPasswordController::class);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
@@ -83,6 +87,13 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+            Route::post('/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
+            Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        });
     });
 
     Route::prefix('user')->name('user.')->middleware(['auth:sanctum'])->group(function () {
