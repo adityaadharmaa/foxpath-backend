@@ -23,7 +23,8 @@ class LoginReguest extends FormRequest
     {
         return [
             'login' => 'required|string',
-            'password' => 'required|min:8'
+            'password' => 'required|min:8',
+            'remember_me' => 'boolean'
         ];
     }
 

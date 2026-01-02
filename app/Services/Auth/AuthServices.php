@@ -62,7 +62,11 @@ class AuthServices
       ], 403);
     }
 
-    $token = $user->createToken('auth_token')->plainTextToken;
+    $remember = $request->boolean('remember_me');
+
+    $expiresAt = $remember ? now()->addYear() : now()->addHours(4);
+
+    $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
     $redirectTo = match ($user->roles_name) {
       'admin' => '/admin',
@@ -82,7 +86,8 @@ class AuthServices
       ],
       'token' => [
         'access_token' => $token,
-        'token_type' => 'Bearer'
+        'token_type' => 'Bearer',
+        'expires_at' => $remember ? $expiresAt->format('Y-m-d') : $expiresAt->format('Y-m-d H:i:s')
       ],
       'meta' => [
         'redirect_to' => $redirectTo,

@@ -46,7 +46,7 @@ class ResetPasswordNotification extends Notification
         return [
             'type' => 'reset_password',
             'title' => 'Permintaan Reset Password',
-            'message' => 'Kami menerima permintaan reset password akun Anda.',
+            'message' => 'Kami telah mengirim link reset password akun Anda ke email Anda.',
             'action_url' => '/reset-password',
         ];
     }
