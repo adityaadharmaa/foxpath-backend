@@ -202,7 +202,7 @@ class ProgramService
         'data' => [
           'program' => $program,
         ],
-      ], 204);
+      ], 200);
 
     } catch (\Exception $e)
     {

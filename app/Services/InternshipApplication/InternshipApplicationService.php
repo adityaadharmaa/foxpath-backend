@@ -97,7 +97,7 @@ class InternshipApplicationService
                 'users_id' => $userId,
                 'status' => 'submitted',
                 'submitted_at' => now(),
-                'is_final' => 'false'
+                'is_final' => false
             ]);
 
             DB::commit();

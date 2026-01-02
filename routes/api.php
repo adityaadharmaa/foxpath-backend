@@ -67,6 +67,7 @@ Route::prefix('v1')->group(function () {
         Route::patch('programs/{id}/toggle', [ProgramController::class, 'activate'])->name('programs.activate');
         Route::patch('programs/{id}/restore', [ProgramController::class, 'restore'])->name('programs.restore');
         Route::post('programs/{id}/calculate-saw', [SAWController::class, 'calculate'])->name('programs.saw-calculate');
+         Route::get('programs/{id}/saw-details', [SAWController::class, 'details'])->name('programs.saw-details');
         // Programs Routes End
 
         // Criteria Routes Start

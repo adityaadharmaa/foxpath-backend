@@ -24,12 +24,12 @@ class Profile extends Model
 
     function educations()
     {
-        return $this->hasMany(ProfileEducation::class, 'profiles_id');
+        return $this->hasMany(ProfileEducation::class, 'profiles_id', 'id');
     }
 
     function activeEducation()
     {
-        return $this->hasOne(ProfileEducation::class, 'profiles_id')
+        return $this->hasOne(ProfileEducation::class, 'profiles_id', 'id')
         ->where('is_active', true);
     }
 }

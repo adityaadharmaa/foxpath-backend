@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Programs\ProgramExportRequest;
 use App\Http\Requests\Programs\ProgramIndexRequest;
 use App\Http\Requests\Programs\StoreProgramRequest;
+use App\Http\Requests\Programs\UpdateProgramRequest;
 use App\Services\Program\ProgramService;
 use Illuminate\Http\Request;
 
@@ -43,6 +44,10 @@ class ProgramController extends Controller
     public function restore(int $id)
     {
         return $this->programService->restore($id);
+    }
+
+    public function update(UpdateProgramRequest $request, int $id) {
+        return $this->programService->update($request ,$id);
     }
 
     public function export(ProgramExportRequest $request)

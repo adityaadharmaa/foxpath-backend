@@ -26,6 +26,6 @@ class ProfileEducation extends Model
 
     public function profile()
     {
-        return $this->belongsTo(Profile::class, 'profiles_id');
+        return $this->belongsTo(Profile::class, 'profiles_id', 'id');
     }
 }

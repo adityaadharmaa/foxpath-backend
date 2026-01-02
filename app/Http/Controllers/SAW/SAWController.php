@@ -15,4 +15,9 @@ class SAWController extends Controller
     public function calculate(int $programId){
         return $this->service->calculateByProgram($programId);
     }
+
+    public function details($programId)
+    {
+        return $this->service->getCalculationDetails($programId);
+    }
 }

@@ -24,7 +24,7 @@ class InternshipApplication extends Model
 
     public function program()
     {
-        return $this->belongsTo(Program::class, 'programs_id');
+        return $this->belongsTo(Program::class, 'programs_id', 'id');
     }
 
     public function scores()
@@ -38,12 +38,12 @@ class InternshipApplication extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'users_id');
+        return $this->belongsTo(User::class, 'users_id', 'id');
     }
 
     public function documents()
     {
-        return $this->hasMany(ApplicationDocument::class, 'internship_applications_id');
+        return $this->hasMany(ApplicationDocument::class, 'internship_applications_id', 'id');
     }
 
     public function hasCompleteDocuments()
