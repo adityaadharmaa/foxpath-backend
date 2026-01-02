@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Mail\ResetPasswordMail;
 use App\Models\PasswordResetToken;
 use App\Models\User;
+use App\Notifications\NewUserRegisterNotification;
 use App\Notifications\ResetPasswordQueued;
 use App\Services\Email\EmailVerificationServices;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class AuthServices
@@ -110,6 +112,16 @@ class AuthServices
 
       $this->emailService->sendVerificationEmail($user);
 
+      $admins = User::where('roles_id', 1)->get();
+
+      if($admins->count() > 0){
+        try{
+          Notification::send($admins, new NewUserRegisterNotification($user));
+        } catch (\Exception $e) {
+          logger()->error('Gagal mengirim notifikasi admin: ' . $e->getMessage());
+        }
+      }
+
       return response()->json([
         'status' => 'success',
         'message' => 'Registration successful. Please check your email to verify your account.',
@@ -177,10 +189,8 @@ class AuthServices
             'created_at' => now(),
         ]);
 
-        // ✅ DB SELESAI DULU
         DB::commit();
 
-        // 📧 EMAIL SETELAH COMMIT (SAMA SEPERTI REGISTER)
         $resetUrl = config('app.frontend_url')
             . "/reset-password?token={$token}&email={$email}";
 

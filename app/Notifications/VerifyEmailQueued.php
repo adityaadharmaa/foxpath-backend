@@ -19,7 +19,7 @@ class VerifyEmailQueued extends VerifyEmail implements ShouldQueue
     {
         $this->connection = 'database';
         $this->onQueue('emails');
-
+        $this->delay = 5;
         $this->afterCommit();
     }
 
