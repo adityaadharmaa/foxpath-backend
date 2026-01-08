@@ -38,17 +38,15 @@ class VerifyEmailQueued extends VerifyEmail implements ShouldQueue
      */
     public function toMail($notifiable)
     {
-        $verificationUrl = $this->verificationUrl($notifiable);
+        $url = $this->verificationUrl($notifiable);
 
         return (new MailMessage)
-            ->subject('Verify Your Email Address')
-            ->greeting('Hello ' . $notifiable->username . '!')
-            ->line('Thank you for registering with Foxpath.')
-            ->line('Please click the button below to verify your email address.')
-            ->action('Verify Email Address', $verificationUrl)
-            ->line('This verification link will expire in 60 minutes.')
-            ->line('If you did not create an account, no further action is required.')
-            ->salutation('Regards, Foxpath Team');
+            ->subject('FoxPath - Verifikasi Email Anda')
+            ->view('emails.verify', [
+                'username' => $notifiable->username,
+                'url' => $url
+            ]);
+            
     }
 
     /**

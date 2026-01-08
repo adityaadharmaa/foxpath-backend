@@ -18,6 +18,7 @@ use App\Http\Controllers\Program\ProgramController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SAW\SAWController;
 use App\Http\Controllers\Users\UsersController;
+use App\Http\Controllers\VerificationController;
 use App\Services\Email\EmailVerificationServices;
 use App\Services\InternshipApplication\InternshipApplicationService;
 use Illuminate\Http\Request;
@@ -29,8 +30,15 @@ Route::prefix('v1')->group(function () {
         Route::post('/register', [AuthController::class, 'register'])->name('register');
         Route::post('/forgot-password', ForgotPasswordController::class);
         Route::post('/reset-password', ResetPasswordController::class);
+        Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+        ->middleware(['signed','throttle:6,1'])
+        ->name('verification.verify');
+        Route::post('/email/resend-public', [VerificationController::class, 'resendPublic'])
+        ->middleware('throttle:6,1')
+        ->name('verification.resend.public');
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+            Route::post('/email/resend', [VerificationController::class, 'resend'])->name('verification.send');
         });
     });
 

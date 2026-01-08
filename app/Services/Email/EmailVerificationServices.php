@@ -3,6 +3,7 @@
 namespace App\Services\Email;
 
 use App\Models\User;
+use App\Notifications\VerifyEmailQueued;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -54,21 +55,48 @@ class EmailVerificationServices
 
         if ($user->hasVerifiedEmail()) {
             return response()->json([
-                'status' => 'error',
+                'status' => 'success',
                 'message' => 'Email already verified.',
-            ], 400);
+            ], 200);
         }
 
-        $user->sendEmailVerificationNotification();
+        $user->sendVerificationEmail($user);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Verification email resent.',
+            'message' => 'Verification link resent. Please check your email.',
+        ], 200);
+    }
+
+    public function resendPublic(Request $request){
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        if(!$user) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Jika email terdaftar, link verifikasi telah dikirim.'
+            ], 200);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Email sudah terverifikasi sebelumnya. Silakan login.',
+            ], 200);
+        }
+
+        $this->sendVerificationEmail($user);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Link verifikasi baru telah dikirim ke email Anda.',
         ], 200);
     }
 
     public function sendVerificationEmail(User $user): void
     {
-        $user->sendEmailVerificationNotification();
+        $user->notify(new VerifyEmailQueued);
     }
 }

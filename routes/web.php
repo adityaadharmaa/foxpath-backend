@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
-Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
-    $emailService = app(EmailVerificationServices::class);
-    return $emailService->verify($request, $id, $hash);
-})->middleware(['signed'])->name('verification.verify');
+// Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
+//     $emailService = app(EmailVerificationServices::class);
+//     return $emailService->verify($request, $id, $hash);
+// })->middleware(['signed'])->name('verification.verify');

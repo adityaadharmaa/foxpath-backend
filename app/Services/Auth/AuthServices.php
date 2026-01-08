@@ -69,7 +69,7 @@ class AuthServices
     $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
 
     $redirectTo = match ($user->roles_name) {
-      'admin' => '/admin',
+      'admin' => '/admin/dashboard',
       'user'  => '/dashboard',
       default => '/login',
     };
