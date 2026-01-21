@@ -23,7 +23,8 @@ class UsersIndexRequest extends FormRequest
     {
         return [
             'type' => 'nullable|in:siswa,mahasiswa',
-            'per_page' => 'nullable|integer|min:1|max:150' 
+            'per_page' => 'nullable|integer|min:1|max:150',
+            'search' => 'nullable|string|max:100'
         ];
     }
 
@@ -39,8 +40,9 @@ class UsersIndexRequest extends FormRequest
 
     protected function prepareForValidation()
     {
+        $perPage = $this->per_page ?? $this->perPage ?? 15;
         $this->merge([
-            'per_page' => $this->per_page ?? 15,
+            'per_page' => $perPage
         ]);
     }
 }

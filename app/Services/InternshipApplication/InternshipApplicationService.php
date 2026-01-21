@@ -10,7 +10,7 @@ class InternshipApplicationService
 {
     public function store(int $userId, int $programId)
     {
-        $profile = Profile::where('users_id', $userId)->first();
+        $profile = Profile::where('users_id', $userId)->with('activeEducation')->first();
 
         if(!$profile){
             return response()->json([
@@ -69,6 +69,7 @@ class InternshipApplicationService
         try{
             $program = Program::where('id', $programId)
                 ->where('is_active', true)
+                ->lockForUpdate()
                 ->first();
 
             if(!$program)
@@ -122,7 +123,7 @@ class InternshipApplicationService
 
     public function updateStatus(int $applicationId, string $status)
     {
-        $application = InternshipApplication::find($applicationId);
+        $application = InternshipApplication::lockForUpdate()->find($applicationId);
 
         if (! $application) {
             return response()->json([
@@ -179,29 +180,56 @@ class InternshipApplicationService
         }
     }
 
-    public function index(int $userId)
+    public function index(int $userId, bool $isAdmin = false, array $filters = [])
     {
-        DB::beginTransaction();
+        // DB::beginTransaction();
 
         try {
-            $applications = InternshipApplication::with([
+            $query = InternshipApplication::with([
                 'program:id,name',
+                'user.profile'
             ])
-            ->where('users_id', $userId)
-            ->latest()
-            ->get();
+            ->latest();
 
-            DB::commit();
+            if(!$isAdmin) {
+                $query->where('users_id', $userId);
+            }
+
+            if(isset($filters['q']) && $filters['q']) {
+                $q = $filters['q'];
+                $query->whereHas('user.profile', function($sub) use ($q){
+                    $sub->where('full_name', 'like', "%${q}%");
+                })->orWhereHas('program', function($sub) use ($q){
+                    $sub->where('name', 'like', "%${q}");
+                });
+            }
+
+            if(isset($filters['status']) && $filters['status']){
+                $query->where('status', $filters['status']);
+            };
+
+            $perPage = $filters['per_page'] ?? 10;
+            $applications = $query->paginate($perPage);
+
+            // DB::commit();
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Application history retrieved successfully.',
-                'data' => $applications
+                'data' => $applications->items(),
+                'meta' => [
+                    'pagination' => [
+                        'current_page' => $applications->currentPage(),
+                        'per_page' => $applications->perPage(),
+                        'total' => $applications->total(),
+                        'last_page' => $applications->lastPage(),
+                    ]
+                ]
             ], 200);
 
         } catch (\Exception $e) {
 
-            DB::rollBack();
+            // DB::rollBack();
 
             return response()->json([
                 'status' => 'error',
@@ -211,19 +239,24 @@ class InternshipApplicationService
         }
     }
 
-    public function show(int $applicationId, int $userId)
+    public function show(int $applicationId, int $userId, bool $isAdmin = false)
     {
-        DB::beginTransaction();
+        // DB::beginTransaction();
 
         try {
-            $application = InternshipApplication::with([
+            $query = InternshipApplication::with([
                 'program',
-                'scores.criteria',
-                'documents'
+                'documents',
+                'user.profile',
+                'user.profileEducation'
             ])
-            ->where('id', $applicationId)
-            ->where('users_id', $userId)
-            ->first();
+            ->where('id', $applicationId);
+
+            if(!$isAdmin) {
+                $query->where('users_id', $userId);
+            }
+
+            $application = $query->first();
 
             if (!$application) {
                 return response()->json([
@@ -232,7 +265,7 @@ class InternshipApplicationService
                 ], 404);
             }
 
-            DB::commit();
+            // DB::commit();
 
             return response()->json([
                 'status' => 'success',
@@ -242,7 +275,7 @@ class InternshipApplicationService
 
         } catch (\Exception $e) {
 
-            DB::rollBack();
+            // DB::rollBack();
 
             return response()->json([
                 'status' => 'error',

@@ -3,7 +3,9 @@
 namespace App\Services\Profile;
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileServices
 {
@@ -16,17 +18,30 @@ class ProfileServices
       $profile = $user->profile ?? $user->profile()->create();
 
       $required = [
-        'applicant_type',
         'full_name',
         'phone',
-        'address',
-        'date_of_birth'
       ];
+
+      $isAdmin = $user->hasRole('admin');
+
+      if(!$isAdmin) {
+        $required = array_merge($required, ['applicant_type', 'address', 'date_of_birth']);
+      }
 
       foreach($required as $field ){
         if(!isset($data[$field]) || $data[$field] === null){
           throw new \Exception("Field '{$field}' is required.");
         }
+      }
+
+      $profilePicturePath = $profile->profile_picture;
+
+      if(isset($data['profile_picture']) && $data['profile_picture'] instanceof UploadedFile){
+        if($profilePicturePath && Storage::disk('public')->exists($profilePicturePath)) {
+          Storage::disk('public')->delete($profilePicturePath);
+        }
+
+        $profilePicturePath = $data['profile_picture']->store('profiles', 'public');
       }
 
       // if($data['applicant_type'] === 'siswa'){
@@ -43,15 +58,20 @@ class ProfileServices
       //     }
       // }
 
-      $profile->update([
-        'applicant_type' => $data['applicant_type'],
+      $updateData = [
         'full_name' => $data['full_name'],
         'phone' => $data['phone'],
-        'address' => $data['address'],
-        'bio' => $data['bio'] ?? null,
-        'profile_picture' => $data['profile_picture'] ?? $profile->profile_picture,
-        'date_of_birth' => $data['date_of_birth'],
-      ]);
+        'profile_picture' => $profilePicturePath,
+      ];
+
+      if(!$isAdmin) {
+        $updateData['applicant_type'] = $data['applicant_type'];
+        $updateData['address'] = $data['address'];
+        $updateData['bio'] = $data['bio'] ?? $profile->bio;
+        $updateData['date_of_birth'] = $data['date_of_birth'];
+      }
+
+      $profile->update($updateData);
 
       DB::commit();
 
@@ -69,5 +89,41 @@ class ProfileServices
         'error' => $e->getMessage()
       ], 500);
     }
+  }
+
+  public function getProfileData(User $user) {
+    $user->load(['profile.activeEducation']);
+
+    $profile = $user->profile;
+    $education = $profile?->activeEducation;
+
+    return response()->json([
+      'status' => 'success',
+      'message' => 'Profile data retrieved successfully.',
+      'data' => [
+        'username' => $user->username,
+        'email' => $user->email,
+        'role' => $user->roles_name,
+        'created_at' => $user->created_at,
+
+        'full_name' => $user->profile->full_name ?? null,
+        'phone' => $user->profile->phone ?? null,
+        'address' => $user->profile->address ?? null,
+        'bio' => $user->profile->bio ?? null,
+        'applicant_type' => $user->profile->applicant_type ?? null,
+        'profile_picture_url' => $user->profile->profile_picture_url ?? null,
+        'date_of_birth' => $user->profile->date_of_birth ?? null,
+
+        'education' => $education ? [
+            'institution_name' => $education->institution_name,
+            'major' => $education->major,
+            'nim' => $education->nim,
+            'nisn' => $education->nisn,
+            'gpa' => $education->gpa,
+            'average_score' => $education->average_score,
+            'level' => $education->level,
+        ] : null
+      ]
+    ]);
   }
 }

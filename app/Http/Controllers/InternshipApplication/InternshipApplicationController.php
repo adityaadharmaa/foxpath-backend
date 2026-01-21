@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\InternshipApplications\StoreInternshipApplicationRequest;
 use App\Http\Requests\InternshipApplications\UpdateInternshipApplicationRequest;
 use App\Services\InternshipApplication\InternshipApplicationService;
+use Illuminate\Http\Request;
 
 class InternshipApplicationController extends Controller
 {
@@ -14,16 +15,22 @@ class InternshipApplicationController extends Controller
     )
     {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $userId = auth()->id();
-        return $this->applicationService->index($userId);
+        $user = $request->user();
+        $isAdmin = $user->hasRole('admin');
+
+        $filters = $request->only(['page', 'per_page', 'q', 'status']);
+
+        return $this->applicationService->index($user->id, $isAdmin, $filters);
     }
 
     public function show(int $id)
     {
-        $userId = auth()->id();
-        return $this->applicationService->show($id, $userId);
+        $user = auth()->user();
+
+        $isAdmin = $user->hasRole('admin');
+        return $this->applicationService->show($id, $user->id, $isAdmin);
     }
 
     public function store(StoreInternshipApplicationRequest $request)

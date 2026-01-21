@@ -11,7 +11,7 @@ class RoleService {
         try{
             DB::beginTransaction();
 
-            $roles = Role::all();
+            $roles = Role::withCount('users')->get();
 
             DB::commit();
 
@@ -85,7 +85,7 @@ class RoleService {
     public function update(array $data, int $id){
         try{
             DB::beginTransaction();
-            // Melakukan pengecekan apakah role benar benar ada
+
             $role = Role::find($id);
 
             if(! $role){
@@ -130,6 +130,36 @@ class RoleService {
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function summary(){
+        try {
+            $totalRoles = Role::count();
+
+            $roleUsage = Role::withCount('users')->get();
+
+            $mostUsedRole = $roleUsage->sortByDesc('users_count')->first();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Role summary retrieved successfully.',
+                'data' => [
+                    'totals' => [
+                        'roles' => $totalRoles,
+                        'most_used' => $mostUsedRole ? $mostUsedRole->name : '-',
+                        'most_used_count' => $mostUsedRole ? $mostUsedRole->users_count : 0
+                    ],
+                    'usage' => $roleUsage
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch summary.',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

@@ -25,6 +25,10 @@ class UserService
     {
         $data = $request->validated();
 
+        $roleFilter = $request->input('role');
+
+        $search = $request->input('search');
+
         $type = $data['type'] ?? null;
         $perPage = $data['per_page'];
 
@@ -32,10 +36,12 @@ class UserService
             'users.id',
             'users.username',
             'users.email',
+            'users.created_at',
             'users.roles_id',
             'users.is_active',
             'roles.name as role_name',
             'profiles.applicant_type',
+            'profiles.profile_picture'
         )
             ->join('roles', 'users.roles_id', '=', 'roles.id')
             ->leftJoin('profiles', 'users.id', '=', 'profiles.users_id')
@@ -43,6 +49,17 @@ class UserService
 
         if ($type) {
             $query->where('profiles.applicant_type', $type);
+        }
+
+        if($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('users.username', 'like', "%{$search}%")
+                  ->orWhere('users.email', 'like', "%{$search}%");
+            });
+        }
+
+        if($roleFilter){
+            $query->where('roles.name', $roleFilter);
         }
 
         $users = $query->paginate($perPage);
@@ -319,6 +336,10 @@ class UserService
         $totalActive = User::where('is_active', 1)->count();
         $totalInactive = User::where('is_active', 0)->count();
 
+        $totalAdmin = User::join('roles', 'users.roles_id', '=', 'roles.id')
+            ->where('roles.name', 'admin')
+            ->count();
+
         $totalDeleted = User::onlyTrashed()->count();
 
         $totalSiswa = User::join('profiles', 'users.id', '=', 'profiles.users_id')
@@ -339,7 +360,8 @@ class UserService
                     'users' => $totalUsers,
                     'deleted_users' => $totalDeleted,
                     'active' => $totalActive,
-                    'inactive' => $totalInactive
+                    'inactive' => $totalInactive,
+                    'admin' => $totalAdmin
                 ],
                 'by_applicant_type' => [
                     'siswa' => $totalSiswa,
@@ -518,6 +540,8 @@ class UserService
         $extension = $format === 'csv' ? 'csv' : 'xlsx';
 
         $fileName = $fileNameBase . '.' . $extension;
+
+        if(ob_get_contents()) ob_end_clean();
 
         return Excel::download(new UsersExport($type), $fileName);
     }

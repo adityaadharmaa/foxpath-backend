@@ -18,4 +18,8 @@ class ProfileController extends Controller
     {
         return $this->profileService->updateProfile($request->user(), $request->all());
     }
+
+    public function showFull(Request $request) {
+        return $this->profileService->getProfileData($request->user());
+    }
 }

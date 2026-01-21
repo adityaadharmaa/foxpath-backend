@@ -21,6 +21,11 @@ class RoleController extends Controller
         return $this->roleService->index();
     }
 
+    public function summary()
+    {
+        return $this->roleService->summary();
+    }
+
     public function store(StoreRoleRequest $request){
         $validated = $request->validated();
 

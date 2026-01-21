@@ -29,6 +29,7 @@ class ProgramService
 
     $query = Program::query()
     ->select('programs.*')
+    ->withCount('applications')
     ->orderBy('programs.created_at', 'desc');
 
     if ($isAdmin)

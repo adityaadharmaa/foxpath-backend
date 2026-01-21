@@ -43,7 +43,10 @@ class InternshipApplication extends Model
 
     public function documents()
     {
-        return $this->hasMany(ApplicationDocument::class, 'internship_applications_id', 'id');
+        return $this->hasMany(
+            ApplicationDocument::class, 
+            'internship_applications_id', 
+            'id');
     }
 
     public function hasCompleteDocuments()

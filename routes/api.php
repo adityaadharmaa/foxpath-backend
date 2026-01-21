@@ -59,6 +59,7 @@ Route::prefix('v1')->group(function () {
 
         // Roles Route Start
         Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::get('/roles/summary', [RoleController::class, 'summary'])->name('roles.summary');
         Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
         Route::get('/roles/{id}', [RoleController::class, 'show'])->name('roles.show');
         Route::patch('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
@@ -86,6 +87,8 @@ Route::prefix('v1')->group(function () {
         // Criteria Routes End
 
         // Routes Application Start
+        Route::get('/applications', [InternshipApplicationController::class, 'index'])->name('applicants.application.index');
+        Route::get('/applications/{id}', [InternshipApplicationController::class, 'show'])->name('applicants.application.show');
         Route::post('/applications/{id}/score', [ApplicationScoreController::class, 'store'])->name('applicants.application.score.store');
         Route::patch('/applications/{id}/status', [InternshipApplicationController::class, 'updateStatus'])->name('applicants.application.status.update');
         Route::patch('/applications/{id}/placement', [ApplicationPlacementController::class, 'update'])->name('applications.placement');
@@ -106,6 +109,7 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::prefix('user')->name('user.')->middleware(['auth:sanctum'])->group(function () {
+        Route::get('/profile-full', [ProfileController::class, 'showFull'])->name('profile.show.all');
         Route::get('/profile', [ProfileController::class, 'getProfile'])->name('profile.get');
         Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
 

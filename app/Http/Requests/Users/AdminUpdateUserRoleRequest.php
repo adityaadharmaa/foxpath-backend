@@ -22,7 +22,7 @@ class AdminUpdateUserRoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => 'required|string|in:admin,user'
+            'role' => 'required|string|in:admin,users'
         ];
     }
 
@@ -30,7 +30,7 @@ class AdminUpdateUserRoleRequest extends FormRequest
     {
         return [
             'role.required' => 'Role is required',
-            'role.in'       => 'Role must be either admin or user',
+            'role.in'       => 'Role must be either admin or users',
         ];
     }
 }

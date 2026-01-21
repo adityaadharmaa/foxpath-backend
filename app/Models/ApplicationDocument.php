@@ -22,7 +22,7 @@ class ApplicationDocument extends Model
     public function application()
     {
         return $this->belongsTo(
-            InternshipApplication::class, 'internship_applications_id'
+            InternshipApplication::class, 'internship_applications_id', 'id'
         );
     }
 

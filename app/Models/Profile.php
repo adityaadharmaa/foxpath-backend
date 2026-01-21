@@ -17,9 +17,19 @@ class Profile extends Model
         'date_of_birth'
     ];
 
+    protected $appends = ['profile_picture_url'];
+
     function users()
     {
         return $this->belongsTo(User::class, 'users_id', 'id');
+    }
+
+    public function getProfilePictureUrlAttribute()
+    {
+        if ($this->profile_picture) {
+            return asset('storage/' . $this->profile_picture);
+        }
+        return null;
     }
 
     function educations()

@@ -25,7 +25,7 @@ class AdminStoreUserRequest extends FormRequest
             'username' => 'required|string|unique:users,username',
             'email' => 'required|email:dns|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string|in:admin,user'
+            'role' => 'required|string|in:admin,users'
         ];
     }
 

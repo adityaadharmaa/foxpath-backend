@@ -31,6 +31,12 @@ class ApplicationDocumentReviewService
             ], 404);
         }
 
+        if($document->application->status !== 'submitted') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Cannot review document. Application status is already ' . $document->application->status
+            ], 422);
+        }
         DB::beginTransaction();
 
         try{
@@ -51,29 +57,63 @@ class ApplicationDocumentReviewService
 
             $application = $document->application;
 
-            $pending = $application->documents()
-                ->where('status', 'pending')
-                ->exists();
+            $allDocuments = $application->documents()->get();
 
-            $rejected = $application->documents()
-                ->where('status', 'rejected')
-                ->exists();
+            $hasRejected = $allDocuments->contains('status', 'rejected');
 
-            if($rejected)
-            {
+            if($hasRejected) {
                 $application->update([
                     'status' => 'submitted',
                     'verified_at' => null
                 ]);
-            } elseif(!$pending)
-            {
-                $application->update([
-                    'status' => 'verified',
-                    'verified_at' => now()
-                ]);
+            } else {
+                $requiredTypes = ['cv', 'transcript'];
 
-                $this->academic->sync($application->fresh());
+                $approvedTypes = $allDocuments
+                    ->where('status', 'approved')
+                    ->pluck('type')
+                    ->unique()
+                    ->toArray();
+
+                $missingRequirements = array_diff($requiredTypes, $approvedTypes);
+
+                $hasPending = $allDocuments->contains('status', 'pending');
+
+                if(empty($missingRequirements) && !$hasPending) {
+                    $application->update([
+                        'status' => 'verified',
+                        'verified_at' => now()
+                    ]);
+
+                    if(method_exists($this, 'academic')) {
+                            $this->academic->sync($application->fresh());
+                    }
+                }
             }
+
+            // $pending = $application->documents()
+            //     ->where('status', 'pending')
+            //     ->exists();
+
+            // $rejected = $application->documents()
+            //     ->where('status', 'rejected')
+            //     ->exists();
+
+            // if($rejected)
+            // {
+            //     $application->update([
+            //         'status' => 'submitted',
+            //         'verified_at' => null
+            //     ]);
+            // } elseif(!$pending)
+            // {
+            //     $application->update([
+            //         'status' => 'verified',
+            //         'verified_at' => now()
+            //     ]);
+
+            //     $this->academic->sync($application->fresh());
+            // }
 
             DB::commit();
 
