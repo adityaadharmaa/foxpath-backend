@@ -88,6 +88,7 @@ class AuthServices
                         'username' => $user->username,
                         'email' => $user->email,
                         'role' => $user->roles_name,
+                        'profile_picture' => $user->profile ? $user->profile->profile_picture : null
                     ],
                 ],
                 'token' => [
@@ -114,6 +115,24 @@ class AuthServices
             ], 500);
         }
 
+    }
+
+    public function me(Request $request)
+    {
+        $user = $request->user()->load('profile');
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'role' => $user->roles_name,
+                    'profile_picture' => $user->profile ? $user->profile->profile_picture : null,
+                ]
+            ] 
+        ], 200);
     }
 
     public function register(RegisterRequest $request)
@@ -173,14 +192,18 @@ class AuthServices
     public function logout(Request $request)
     {
         try {
-            $request->user()->currentAccessToken()->delete();
+            $user = $request->user();
+            if($user) {
+                $user->currentAccessToken()->delete();
+             
+                logger()->info('USER LOGOUT : ', [
+                'users_id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->roles_name,
+                ]);
+            }
             
-            logger()->info('USER LOGOUT : ', [
-              'users_id' => auth()->id(),
-              'username' => auth()->username,
-              'email' => auth()->email,
-              'role' => auth()->roles_name,
-            ]);
             return response()->json([
                 'status' => 'success',
                 'message' => 'Logout Successful',

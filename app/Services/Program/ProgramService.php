@@ -97,6 +97,28 @@ class ProgramService
     ], 200);
   }
 
+  public function show($id) {
+    $program = Program::with([
+      'applications' => function($query) {
+        $query->orderBy('created_at', 'desc');
+      },
+      'applications.user.profile'
+    ])->find($id);
+
+    if(!$program) {
+      return response()->json([
+        'status' => 'error',
+        'message' => 'Program not found'
+      ], 404);
+    }
+
+    return response()->json([
+      'status' => 'success',
+      'message' => 'Program detail retrieved successfully.',
+      'data' => $program
+    ], 200);
+  }
+
   public function getApplicantsByProgram(int $programId, ?string $status = null, ?string $result = null){
     DB::beginTransaction();
 

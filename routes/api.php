@@ -36,7 +36,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/email/resend-public', [VerificationController::class, 'resendPublic'])
         ->middleware('throttle:6,1')
         ->name('verification.resend.public');
+
         Route::middleware('auth:sanctum')->group(function () {
+            Route::get('/me', [AuthController::class, 'me'])->name('me');
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
             Route::post('/email/resend', [VerificationController::class, 'resend'])->name('verification.send');
         });
@@ -67,8 +69,8 @@ Route::prefix('v1')->group(function () {
         // Roles Route End
 
         // Programs Routes Start
-        Route::apiResource('programs', ProgramController::class)->except('show');
         Route::get('programs/summary', [ProgramController::class, 'summary'])->name('programs.summary');
+        Route::apiResource('programs', ProgramController::class);
         Route::get('programs/{program}/applicants', [ProgramController::class, 'applicants'])->name('programs.applicants.applicants');
         // Route::get('programs/{id}/stats', [ProgramController::class, 'stats'])->name('programs.stats');
         Route::post('programs/export', [ProgramController::class, 'export'])->name('programs.export');
