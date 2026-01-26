@@ -28,84 +28,82 @@ class ProgramService
     $perPage = (int) ($filter['per_page'] ?? 15);
 
     $query = Program::query()
-    ->select('programs.*')
-    ->withCount('applications')
-    ->orderBy('programs.created_at', 'desc');
+      ->select('programs.*')
+      ->withCount('applications')
+      ->orderBy('programs.created_at', 'desc');
 
-    if ($isAdmin)
-    {
-       if ($deletedOnly) {
+    if ($isAdmin) {
+      if ($deletedOnly) {
         $query->onlyTrashed();
-    } elseif ($includeDeleted) {
+      } elseif ($includeDeleted) {
         $query->withTrashed();
-    }
+      }
 
-    if (!is_null($active)) {
+      if (!is_null($active)) {
         $query->where('programs.is_active', (int) $active);
-    }
-    }
-    else {
+      }
+    } else {
       $query->where('programs.is_active', 1);
 
-      if($onlyOpen)
-      {
+      if ($onlyOpen) {
         $now = now();
 
-        $query->where(function ($sub) use ($now){
+        $query->where(function ($sub) use ($now) {
           $sub->whereNull('programs.registration_starts_at')
-              ->orWhere('programs.registration_starts_at', '<=', $now);
-        })->where(function ($sub) use ($now){
+            ->orWhere('programs.registration_starts_at', '<=', $now);
+        })->where(function ($sub) use ($now) {
           $sub->whereNull('programs.registration_ends_at')
-              ->orWhere('programs.registration_ends_at', '>=', $now);
+            ->orWhere('programs.registration_ends_at', '>=', $now);
         });
       }
     }
 
-    if($q) {
-      $query->where(function ($sub) use ($q){
+    if ($q) {
+      $query->where(function ($sub) use ($q) {
         $sub->where('programs.name', 'like', "%{$q}%")
-            ->orWhere('programs.description', 'like', "%{$q}%");
+          ->orWhere('programs.description', 'like', "%{$q}%");
       });
     }
 
     $paginator = $query->paginate($perPage);
 
-     $data = collect($paginator->items())->map(function ($program) {
-        return [
-            ...$program->toArray(),
-            'is_deleted' => !is_null($program->deleted_at),
-        ];
+    $data = collect($paginator->items())->map(function ($program) {
+      return [
+        ...$program->toArray(),
+        'is_deleted' => !is_null($program->deleted_at),
+      ];
     });
 
-     return response()->json([
-        'status' => 'success',
-        'message' => 'Programs retrieved successfully.',
-        'data' => $data,
-        'meta' => [
-            'role' => $isAdmin ? 'admin' : 'user',
-            'filters' => [
-                'include_deleted' => (bool) $includeDeleted,
-                'deleted_only' => (bool) $deletedOnly,
-            ],
-            'pagination' => [
-                'current_page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'last_page' => $paginator->lastPage(),
-            ],
+    return response()->json([
+      'status' => 'success',
+      'message' => 'Programs retrieved successfully.',
+      'data' => $data,
+      'meta' => [
+        'role' => $isAdmin ? 'admin' : 'user',
+        'filters' => [
+          'include_deleted' => (bool) $includeDeleted,
+          'deleted_only' => (bool) $deletedOnly,
         ],
+        'pagination' => [
+          'current_page' => $paginator->currentPage(),
+          'per_page' => $paginator->perPage(),
+          'total' => $paginator->total(),
+          'last_page' => $paginator->lastPage(),
+        ],
+      ],
     ], 200);
   }
 
-  public function show($id) {
+  public function show($id)
+  {
     $program = Program::with([
-      'applications' => function($query) {
+      'applications' => function ($query) {
         $query->orderBy('created_at', 'desc');
       },
       'applications.user.profile'
     ])->find($id);
 
-    if(!$program) {
+    if (!$program) {
       return response()->json([
         'status' => 'error',
         'message' => 'Program not found'
@@ -119,44 +117,44 @@ class ProgramService
     ], 200);
   }
 
-  public function getApplicantsByProgram(int $programId, ?string $status = null, ?string $result = null){
+  public function getApplicantsByProgram(int $programId, ?string $status = null, ?string $result = null)
+  {
     DB::beginTransaction();
 
-    try{
+    try {
       $query = InternshipApplication::with([
-                'user:id,email',
-                'user.profile:id,users_id,full_name,applicant_type',
-                'user.profileEducation',
-                'scores.criteria:id,name,weight',
-            ])
-            ->where('programs_id', $programId);
+        'user:id,email',
+        'user.profile:id,users_id,full_name,applicant_type',
+        'user.profileEducation',
+        'scores.criteria:id,name,weight',
+      ])
+        ->where('programs_id', $programId);
 
-            // Filter status (submitted, verified, scored)
-            if ($status) {
-                $query->where('status', $status);
-            }
+      // Filter status (submitted, verified, scored)
+      if ($status) {
+        $query->where('status', $status);
+      }
 
-            // Filter hasil akhir
-            if ($result === 'accepted') {
-                $query->where('status', 'accepted');
-            }
+      // Filter hasil akhir
+      if ($result === 'accepted') {
+        $query->where('status', 'accepted');
+      }
 
-            if ($result === 'rejected') {
-                $query->where('status', 'rejected');
-            }
+      if ($result === 'rejected') {
+        $query->where('status', 'rejected');
+      }
 
-            $applications = $query
-                ->orderBy('rank')
-                ->get();
+      $applications = $query
+        ->orderBy('rank')
+        ->get();
 
-            DB::commit();
+      DB::commit();
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Applicants retrieved successfully.',
-                'data' => $applications
-            ], 200);
-
+      return response()->json([
+        'status' => 'success',
+        'message' => 'Applicants retrieved successfully.',
+        'data' => $applications
+      ], 200);
     } catch (\Exception $e) {
       DB::rollBack();
 
@@ -173,7 +171,7 @@ class ProgramService
     $data = $request->validated();
 
     DB::beginTransaction();
-    try{
+    try {
       $program = Program::create($data);
 
       DB::commit();
@@ -185,8 +183,7 @@ class ProgramService
           'program' => $program,
         ],
       ], 201);
-    } catch (\Exception $e)
-    {
+    } catch (\Exception $e) {
       DB::rollBack();
 
       return response()->json([
@@ -203,8 +200,7 @@ class ProgramService
 
     $program = Program::find($id);
 
-    if(!$program)
-    {
+    if (!$program) {
       return response()->json([
         'status' => 'error',
         'message' => 'Program not found.'
@@ -212,7 +208,7 @@ class ProgramService
     }
 
     DB::beginTransaction();
-    try{
+    try {
       $program->update($data);
 
       $program->save();
@@ -226,9 +222,7 @@ class ProgramService
           'program' => $program,
         ],
       ], 200);
-
-    } catch (\Exception $e)
-    {
+    } catch (\Exception $e) {
       DB::rollBack();
 
       return response()->json([
@@ -243,22 +237,21 @@ class ProgramService
   {
     $program = Program::find($id);
 
-    if(!$program)
-    {
+    if (!$program) {
       return response()->json([
         'status' => 'error',
         'message' => 'Program not found.'
       ], 404);
     }
 
-    if($program->trashed()){
+    if ($program->trashed()) {
       return response()->json([
         'status' => 'error',
         'message' => 'Program already deleted.'
       ], 400);
     }
 
-    if($program->applications()->exists()){
+    if ($program->applications()->exists()) {
       return response()->json([
         'status' => 'error',
         'message' => 'Cannot delete program with associated applications.'
@@ -267,7 +260,7 @@ class ProgramService
 
     DB::beginTransaction();
 
-    try{ 
+    try {
       $program->delete();
 
       DB::commit();
@@ -275,10 +268,8 @@ class ProgramService
       return response()->json([
         'status' => 'success',
         'message' => 'Program deleted successfully.'
-      ], 204);
-
-    } catch (\Exception $e)
-    {
+      ], 200);
+    } catch (\Exception $e) {
       DB::rollBack();
 
       return response()->json([
@@ -293,8 +284,7 @@ class ProgramService
   {
     $program = Program::find($id);
 
-    if(!$program)
-    {
+    if (!$program) {
       return response()->json([
         'status' => 'error',
         'message' => 'Program not found.'
@@ -318,8 +308,7 @@ class ProgramService
           'is_active' => $program->is_active,
         ],
       ], 200);
-    } catch (\Exception $e)
-    {
+    } catch (\Exception $e) {
       DB::rollBack();
 
       return response()->json([
@@ -367,58 +356,63 @@ class ProgramService
 
   public function export(array $filters)
   {
-     $format = $filters['format'];
-      $includeDeleted = (bool) ($filters['include_deleted'] ?? false);
-      $deletedOnly = (bool) ($filters['deleted_only'] ?? false);
-      $isActive = $filters['is_active'] ?? null;
+    $format = $filters['format'];
+    $includeDeleted = (bool) ($filters['include_deleted'] ?? false);
+    $deletedOnly = (bool) ($filters['deleted_only'] ?? false);
+    $isActive = $filters['is_active'] ?? null;
 
-      $fileName = 'programs_' . now()->format('Ymd_His') . '.' . $format;
+    $fileName = 'programs_' . now()->format('Ymd_His') . '.' . $format;
 
-      return Excel::download(
-          new ProgramsExport($includeDeleted, $deletedOnly, $isActive),
-          $fileName
-      );
+    return Excel::download(
+      new ProgramsExport($includeDeleted, $deletedOnly, $isActive),
+      $fileName
+    );
   }
 
   public function summary()
   {
     $programs = Program::withTrashed()
-        ->withCount([
-            'applications',
-            'applications as pending_applicants' => fn ($q) =>
-                $q->where('status', 'pending'),
-            'applications as accepted_applicants' => fn ($q) =>
-                $q->where('status', 'accepted'),
-            'applications as rejected_applicants' => fn ($q) =>
-                $q->where('status', 'rejected'),
-        ])
-        ->get();
+      ->withCount([
+        'applications',
+        'applications as submitted_applicants' => fn($q) => $q->where('status', 'submitted'),
+        'applications as verified_applicants' => fn($q) => $q->where('status', 'verified'),
+        'applications as pending_applicants' => fn($q) => $q->where('status', 'pending'),
+        'applications as scored_applicants' => fn($q) => $q->where('status', 'scored'),
+        'applications as accepted_applicants' => fn($q) => $q->where('status', 'accepted'),
+        'applications as rejected_applicants' => fn($q) => $q->where('status', 'rejected'),
+      ])
+      ->get();
 
     return response()->json([
-        'status' => 'success',
-        'data' => [
-            'total_programs' => $programs->count(),
-            'active_programs' => $programs->whereNull('deleted_at')->where('is_active', true)->count(),
-            'deleted_programs' => $programs->whereNotNull('deleted_at')->count(),
+      'status' => 'success',
+      'data' => [
+        'total_programs' => $programs->count(),
+        'active_programs' => $programs->whereNull('deleted_at')->where('is_active', true)->count(),
+        'deleted_programs' => $programs->whereNotNull('deleted_at')->count(),
 
-            'total_applications' => $programs->sum('applications_count'),
-            'pending_applications' => $programs->sum('pending_applicants'),
-            'accepted_applications' => $programs->sum('accepted_applicants'),
-            'rejected_applications' => $programs->sum('rejected_applicants'),
+        'total_applications' => $programs->sum('applications_count'),
 
-            'programs' => $programs->map(fn ($program) => [
-                'id' => $program->id,
-                'name' => $program->name,
-                'is_active' => $program->is_active,
-                'is_deleted' => !is_null($program->deleted_at),
-                'applications' => [
-                    'total' => $program->applications_count,
-                    'pending' => $program->pending_applicants,
-                    'accepted' => $program->accepted_applicants,
-                    'rejected' => $program->rejected_applicants,
-                ],
-            ]),
-        ],
+        'draft_applications' => $programs->sum('draft_applicants'),
+        'submitted_applications' => $programs->sum('submitted_applicants'),
+        'verified_applications' => $programs->sum('verified_applicants'),
+        'scored_applications' => $programs->sum('scored_applicants'),
+        'pending_applications' => $programs->sum('pending_applicants'),
+        'accepted_applications' => $programs->sum('accepted_applicants'),
+        'rejected_applications' => $programs->sum('rejected_applicants'),
+
+        'programs' => $programs->map(fn($program) => [
+          'id' => $program->id,
+          'name' => $program->name,
+          'is_active' => $program->is_active,
+          'is_deleted' => !is_null($program->deleted_at),
+          'applications' => [
+            'total' => $program->applications_count,
+            'pending' => $program->pending_applicants,
+            'accepted' => $program->accepted_applicants,
+            'rejected' => $program->rejected_applicants,
+          ],
+        ]),
+      ],
     ], 200);
   }
 }

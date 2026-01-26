@@ -27,7 +27,7 @@ class UpdateCriteriaRequest extends FormRequest
                 'sometimes',
                 'string',
                 'max:10',
-                Rule::unique('criterias', 'code')->ignore($this->route('criteria')),
+                Rule::unique('criterias', 'code')->ignore($this->route('criterion')),
             ],
             'name' => ['sometimes', 'string', 'max:255'],
             'weight' => ['sometimes', 'numeric', 'between:0,1'],

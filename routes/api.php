@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Criteria\CriteriaController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\InternshipApplication\InternshipApplicationController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -31,11 +32,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/forgot-password', ForgotPasswordController::class);
         Route::post('/reset-password', ResetPasswordController::class);
         Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
-        ->middleware(['signed','throttle:6,1'])
-        ->name('verification.verify');
+            ->middleware(['signed', 'throttle:6,1'])
+            ->name('verification.verify');
         Route::post('/email/resend-public', [VerificationController::class, 'resendPublic'])
-        ->middleware('throttle:6,1')
-        ->name('verification.resend.public');
+            ->middleware('throttle:6,1')
+            ->name('verification.resend.public');
 
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('/me', [AuthController::class, 'me'])->name('me');
@@ -45,6 +46,10 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        // Dashboard
+        Route::get('/dashboard/analytics', [DashboardController::class, 'analytics']);
+        // Dashboard End
+
         // Users Route Start
         Route::get('/users', [UsersController::class, 'index'])->name('users.index');
         Route::post('/users', [UsersController::class, 'store'])->name('users.store');
@@ -78,7 +83,7 @@ Route::prefix('v1')->group(function () {
         Route::patch('programs/{id}/toggle', [ProgramController::class, 'activate'])->name('programs.activate');
         Route::patch('programs/{id}/restore', [ProgramController::class, 'restore'])->name('programs.restore');
         Route::post('programs/{id}/calculate-saw', [SAWController::class, 'calculate'])->name('programs.saw-calculate');
-         Route::get('programs/{id}/saw-details', [SAWController::class, 'details'])->name('programs.saw-details');
+        Route::get('programs/{id}/saw-details', [SAWController::class, 'details'])->name('programs.saw-details');
         // Programs Routes End
 
         // Criteria Routes Start

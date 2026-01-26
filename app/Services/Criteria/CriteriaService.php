@@ -71,12 +71,12 @@ class CriteriaService
 
     public function store(array $data)
     {
-        $criteria = Criteria::create($data);
-
+        
         DB::beginTransaction();
-
+        
         try {
-            $criteria->save();
+            // $criteria->save();
+            $criteria = Criteria::create($data);
             DB::commit();
 
             return response()->json([
@@ -114,7 +114,7 @@ class CriteriaService
         try {
             $criteria->update($data);
 
-            $criteria->save();
+            // $criteria->save();
 
             DB::commit();
 
