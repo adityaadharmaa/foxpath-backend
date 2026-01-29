@@ -23,8 +23,8 @@ class UpdatePlacementRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'placement_start_at' => ['required', 'date', 'date_format:Y-m-d'],
-            'placement_end_at'   => ['nullable', 'date', 'after:placement_start_at'],
+            'start_date' => ['nullable', 'date', 'date_format:Y-m-d'],
+            'end_date'   => ['nullable', 'date', 'after:placement_start_at'],
             'duration_months'    => ['nullable', 'integer', 'min:1'],
         ];
     }

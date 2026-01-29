@@ -16,30 +16,32 @@ class ApplicationPlacementService
     ) {
         $application = InternshipApplication::with('program')->find($applicationId);
 
-        if(!$application)
-        {
+        if (!$application || $application->status !== 'accepted') {
             return response()->json([
                 'status' => 'error',
-                'messagr' => 'Application not found.'
-            ], 404);
-        }
-
-        if($application->status !== 'accepted'){
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Application not accepted or not found',
-                'current_status' => $application->status 
+                'message' => 'Invalid application. Status must be Accepted.'
             ], 422);
         }
 
+
+
+        // if ($application->status !== 'accepted') {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Application not accepted or not found',
+        //         'current_status' => $application->status
+        //     ], 422);
+        // }
+
         DB::beginTransaction();
 
-        try{
-            $start = Carbon::parse($startDate);
+        try {
+            $currentStart = $application->placement_start_at ? Carbon::parse($application->placement_start_at) : now();
+            $start = $startDate ? Carbon::parse($startDate) : $currentStart;
 
-            if($endDate) {
+            if ($endDate) {
                 $end = Carbon::parse($endDate);
-            } elseif($durationMonths) {
+            } elseif ($durationMonths) {
                 $end = (clone $start)->addMonths($durationMonths);
             } else {
                 $end = (clone $start)->addMonths(
@@ -59,7 +61,8 @@ class ApplicationPlacementService
                 'message' => 'Placement dates updated successfully.',
                 'data' => [
                     'start' => $start->toDateString(),
-                    'end' => $end->toDateString()
+                    'end' => $end->toDateString(),
+                    'duration' => $start->diffInMonths($end) . 'Months'
                 ]
             ], 200);
         } catch (\Exception $e) {
@@ -69,7 +72,7 @@ class ApplicationPlacementService
                 'status' => 'error',
                 'message' => 'Failed to update placement dates.',
                 'error' =>  config('app.debug') ? $e->getMessage() : 'Internal server error.'
-            ],500);
+            ], 500);
         }
     }
 }

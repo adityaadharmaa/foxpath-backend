@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Services\ApplicationDecision;
 
@@ -15,25 +15,24 @@ class ApplicationDecisionService
     {
         DB::beginTransaction();
 
-        try{
+        try {
             $program = Program::findOrFail($programId);
 
             $applications = InternshipApplication::where('programs_id', $programId)
-            ->where('status', 'scored')
-            ->orderBy('rank')
-            ->get();
+                ->where('status', 'calculated')
+                ->whereNotNull('rank')
+                ->orderBy('rank', 'asc')
+                ->get();
 
-            if ($applications->isEmpty())
-            {
+            if ($applications->isEmpty()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Scored applicantion not found.'
+                    'message' => 'No calculated applications found. Please run SAW calculation first.'
                 ], 404);
             }
 
-            foreach($applications as $index => $application)
-            {
-                if($index < $program->capacity){
+            foreach ($applications as $index => $application) {
+                if ($index < $program->capacity) {
                     $application->update([
                         'status' => 'accepted',
                         'admitted_at' => now(),
@@ -42,7 +41,6 @@ class ApplicationDecisionService
                     ]);
 
                     $this->setPlacementDates($application, $program);
-
                 } else {
                     $application->update([
                         'status' => 'rejected',
@@ -56,10 +54,9 @@ class ApplicationDecisionService
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Applicants have been decided based on quota'
+                'message' => 'Applicants have been decided (Accepted/Rejected) based on ranking quota.'
             ], 201);
-        } catch ( \Exception $e )
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
@@ -72,7 +69,11 @@ class ApplicationDecisionService
 
     private function setPlacementDates(InternshipApplication $application, Program $program)
     {
-        $start  = Carbon::parse($application->admitted_at)->addDays(7);
+        if ($program->cohort_starts_at) {
+            $start = Carbon::parse($program->cohort_starts_at);
+        } else {
+            $start  = Carbon::parse($application->admitted_at)->addDays(7);
+        }
         $end    = (clone $start)->addMonths($program->placement_duration_months);
 
         $application->update([

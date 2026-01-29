@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Services\Criteria;
 
@@ -26,7 +26,7 @@ class CriteriaService
             $query->onlyTrashed();
         }
 
-        if(!empty($filters['q'])){
+        if (!empty($filters['q'])) {
             $q = $filters['q'];
 
             $query->where(function ($sub) use ($q) {
@@ -35,7 +35,7 @@ class CriteriaService
             });
         }
 
-        if(!is_null($filters['is_active'] ?? null)){
+        if (!is_null($filters['is_active'] ?? null)) {
             $query->where('is_active', $active);
         }
 
@@ -58,22 +58,35 @@ class CriteriaService
                     'include_deleted' => $includeDeleted,
                     'deleted_only' => $deletedOnly,
                     'per_page' => $perPage,
-                    ],
+                ],
                 'pagination' => [
-                        'total' => $paginator->total(),
-                        'per_page' => $paginator->perPage(),
-                        'current_page' => $paginator->currentPage(),
-                        'last_page' => $paginator->lastPage(),
+                    'total' => $paginator->total(),
+                    'per_page' => $paginator->perPage(),
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
                 ],
             ]
         ], 200);
     }
 
+    public function getActiveCriteria()
+    {
+        $criterias = Criteria::where('is_active', true)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Active criteria retrieved successfully.',
+            'data' => $criterias
+        ], 200);
+    }
+
     public function store(array $data)
     {
-        
+
         DB::beginTransaction();
-        
+
         try {
             // $criteria->save();
             $criteria = Criteria::create($data);
@@ -86,9 +99,7 @@ class CriteriaService
                     'criteria' => $criteria
                 ]
             ], 201);
-            
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
@@ -102,8 +113,7 @@ class CriteriaService
     {
         $criteria = Criteria::find($id);
 
-        if(!$criteria)
-        {
+        if (!$criteria) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Criteria not found.'
@@ -125,8 +135,7 @@ class CriteriaService
                     'criteria' => $criteria
                 ]
             ], 200);
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
@@ -140,24 +149,21 @@ class CriteriaService
     {
         $criteria = Criteria::find($id);
 
-        if(!$criteria)
-        {
+        if (!$criteria) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Criteria not found.'
             ], 404);
         }
 
-        if($criteria->scores()->exists())
-        {
+        if ($criteria->scores()->exists()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Cannot delete criteria with associated application scores.'
             ], 400);
         }
 
-        if($criteria->trashed())
-        {
+        if ($criteria->trashed()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Criteria already deleted.'
@@ -175,8 +181,7 @@ class CriteriaService
                 'status' => 'success',
                 'message' => 'Criteria deleted successfully.'
             ], 200);
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
@@ -190,8 +195,7 @@ class CriteriaService
     {
         $criteria = Criteria::onlyTrashed()->find($id);
 
-        if(!$criteria)
-        {
+        if (!$criteria) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Criteria not found or not deleted.'
@@ -199,7 +203,7 @@ class CriteriaService
         }
 
         DB::beginTransaction();
-        try{
+        try {
             $criteria->restore();
 
             DB::commit();
@@ -211,8 +215,7 @@ class CriteriaService
                     'criteria' => $criteria
                 ]
             ], 200);
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
@@ -226,8 +229,7 @@ class CriteriaService
     {
         $criteria = Criteria::find($id);
 
-        if(!$criteria)
-        {
+        if (!$criteria) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Criteria not found.'
@@ -235,7 +237,7 @@ class CriteriaService
         }
 
         DB::beginTransaction();
-        try{
+        try {
             $criteria->is_active = !$criteria->is_active;
 
             $criteria->save();
@@ -251,8 +253,7 @@ class CriteriaService
                     'is_active' => $criteria->is_active,
                 ],
             ], 200);
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',

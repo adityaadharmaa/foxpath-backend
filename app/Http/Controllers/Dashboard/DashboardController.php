@@ -14,4 +14,9 @@ class DashboardController extends Controller
     {
         return $this->dashboard->analytics();
     }
+
+    public function getSchoolStats()
+    {
+        return $this->dashboard->getSchoolStats();
+    }
 }

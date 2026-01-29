@@ -10,14 +10,14 @@ class ApplicationPlacementController extends Controller
 {
     public function __construct(
         protected ApplicationPlacementService $placement
-    ){}
+    ) {}
 
     public function update(UpdatePlacementRequest $request, int $id)
     {
         return $this->placement->overrideDates(
             $id,
-            $request->placement_start_at,
-            $request->placement_end_at,
+            $request->start_date,
+            $request->end_date,
             $request->duration_months,
         );
     }

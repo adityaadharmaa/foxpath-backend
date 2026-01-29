@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Services\Profile;
 
@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Storage;
 class ProfileServices
 {
   // Lengkapi profile yang sudah ada
-  public function updateProfile(User $user, array $data){
+  public function updateProfile(User $user, array $data)
+  {
     try {
       DB::beginTransaction();
 
@@ -24,20 +25,20 @@ class ProfileServices
 
       $isAdmin = $user->hasRole('admin');
 
-      if(!$isAdmin) {
+      if (!$isAdmin) {
         $required = array_merge($required, ['applicant_type', 'address', 'date_of_birth']);
       }
 
-      foreach($required as $field ){
-        if(!isset($data[$field]) || $data[$field] === null){
+      foreach ($required as $field) {
+        if (!isset($data[$field]) || $data[$field] === null) {
           throw new \Exception("Field '{$field}' is required.");
         }
       }
 
       $profilePicturePath = $profile->profile_picture;
 
-      if(isset($data['profile_picture']) && $data['profile_picture'] instanceof UploadedFile){
-        if($profilePicturePath && Storage::disk('public')->exists($profilePicturePath)) {
+      if (isset($data['profile_picture']) && $data['profile_picture'] instanceof UploadedFile) {
+        if ($profilePicturePath && Storage::disk('public')->exists($profilePicturePath)) {
           Storage::disk('public')->delete($profilePicturePath);
         }
 
@@ -64,7 +65,7 @@ class ProfileServices
         'profile_picture' => $profilePicturePath,
       ];
 
-      if(!$isAdmin) {
+      if (!$isAdmin) {
         $updateData['applicant_type'] = $data['applicant_type'];
         $updateData['address'] = $data['address'];
         $updateData['bio'] = $data['bio'] ?? $profile->bio;
@@ -80,7 +81,7 @@ class ProfileServices
         'message' => 'Profile updated successfully.',
         'data' => $profile->fresh()
       ], 201);
-    } catch(\Exception $e){
+    } catch (\Exception $e) {
       DB::rollBack();
 
       return response()->json([
@@ -91,7 +92,8 @@ class ProfileServices
     }
   }
 
-  public function getProfileData(User $user) {
+  public function getProfileData(User $user)
+  {
     $user->load(['profile.activeEducation']);
 
     $profile = $user->profile;
@@ -115,13 +117,13 @@ class ProfileServices
         'date_of_birth' => $user->profile->date_of_birth ?? null,
 
         'education' => $education ? [
-            'institution_name' => $education->institution_name,
-            'major' => $education->major,
-            'nim' => $education->nim,
-            'nisn' => $education->nisn,
-            'gpa' => $education->gpa,
-            'average_score' => $education->average_score,
-            'level' => $education->level,
+          'institution_name' => $education->institution_name,
+          'major' => $education->major,
+          'nim' => $education->nim,
+          'nisn' => $education->nisn,
+          'gpa' => $education->gpa,
+          'average_score' => $education->average_score,
+          'level' => $education->level,
         ] : null
       ]
     ]);

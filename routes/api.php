@@ -48,6 +48,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
         // Dashboard
         Route::get('/dashboard/analytics', [DashboardController::class, 'analytics']);
+        Route::get('/dashboard/stats/school', [DashboardController::class, 'getSchoolStats']);
         // Dashboard End
 
         // Users Route Start
@@ -87,6 +88,7 @@ Route::prefix('v1')->group(function () {
         // Programs Routes End
 
         // Criteria Routes Start
+        Route::get('/criteria/active', [CriteriaController::class, 'active'])->name('criteria.active');
         Route::apiResource('criteria', CriteriaController::class);
         Route::patch('criteria/{id}/restore', [CriteriaController::class, 'restore'])->name('criteria.restore');
         Route::patch('criteria/{id}/toggle', [CriteriaController::class, 'toggle'])->name('criteria.activate');

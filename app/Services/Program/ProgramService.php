@@ -378,6 +378,7 @@ class ProgramService
         'applications as verified_applicants' => fn($q) => $q->where('status', 'verified'),
         'applications as pending_applicants' => fn($q) => $q->where('status', 'pending'),
         'applications as scored_applicants' => fn($q) => $q->where('status', 'scored'),
+        'applications as calculated_applicants' => fn($q) => $q->where('status', 'calculated'),
         'applications as accepted_applicants' => fn($q) => $q->where('status', 'accepted'),
         'applications as rejected_applicants' => fn($q) => $q->where('status', 'rejected'),
       ])
@@ -396,6 +397,7 @@ class ProgramService
         'submitted_applications' => $programs->sum('submitted_applicants'),
         'verified_applications' => $programs->sum('verified_applicants'),
         'scored_applications' => $programs->sum('scored_applicants'),
+        'calculated_applications' => $programs->sum('calculated_applicants'),
         'pending_applications' => $programs->sum('pending_applicants'),
         'accepted_applications' => $programs->sum('accepted_applicants'),
         'rejected_applications' => $programs->sum('rejected_applicants'),

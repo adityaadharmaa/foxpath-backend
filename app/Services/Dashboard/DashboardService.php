@@ -56,4 +56,28 @@ class DashboardService
             ]
         ], 200);
     }
+
+    public function getSchoolStats()
+    {
+        $stats = InternshipApplication::query()
+            // 1. Hubungkan Application ke User
+            ->join('users', 'internship_applications.users_id', '=', 'users.id')
+            // 2. Hubungkan User ke Profile (Karena pendidikan ada di bawah profile)
+            ->join('profiles', 'users.id', '=', 'profiles.users_id')
+            // 3. Hubungkan Profile ke Profile Education (Sesuai screenshot: profiles_id)
+            ->join('profile_education', 'profiles.id', '=', 'profile_education.profiles_id')
+            ->select(
+                'profile_education.institution_name as name',
+                DB::raw('count(*) as value')
+            )
+            ->groupBy('profile_education.institution_name')
+            ->orderByDesc('value')
+            ->limit(5)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $stats
+        ], 200);
+    }
 }

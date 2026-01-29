@@ -17,8 +17,7 @@ class ApplicationScoreService
     {
         $application = InternshipApplication::find($applicationId);
 
-        if(!$application)
-        {
+        if (!$application) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Application not found',
@@ -28,14 +27,12 @@ class ApplicationScoreService
         DB::beginTransaction();
 
         try {
-            foreach($data['scores'] as $item)
-            {
+            foreach ($data['scores'] as $item) {
                 $criteria = Criteria::where('id', $item['criteria_id'])
-                ->where('is_active', true)
-                ->first();
+                    ->where('is_active', true)
+                    ->first();
 
-                if (!$criteria)
-                {
+                if (!$criteria) {
                     throw new \Exception("Criteria with ID {$item['criteria_id']} not found or inactive.");
                 }
 
@@ -52,6 +49,11 @@ class ApplicationScoreService
                 );
             }
 
+            $application->update([
+                'status' => 'scored',
+                'scored_at' => now()
+            ]);
+
             DB::commit();
 
             return response()->json([
@@ -61,8 +63,7 @@ class ApplicationScoreService
                     'application_id' => $application->id
                 ]
             ], 200);
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',

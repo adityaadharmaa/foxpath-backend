@@ -10,10 +10,11 @@ class SAWController extends Controller
 {
     public function __construct(
         protected SawCalculationService $service
-    ){}
+    ) {}
 
-    public function calculate(int $programId){
-        return $this->service->calculateByProgram($programId);
+    public function calculate($programId)
+    {
+        return $this->service->calculateByProgram((int)$programId);
     }
 
     public function details($programId)

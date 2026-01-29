@@ -14,8 +14,7 @@ class CriteriaController extends Controller
 {
     public function __construct(
         protected CriteriaService $criteriaService
-    )
-    {}
+    ) {}
 
     public function index(CriteriaIndexRequest $request)
     {
@@ -30,6 +29,11 @@ class CriteriaController extends Controller
     public function update(UpdateCriteriaRequest $request, $id)
     {
         return $this->criteriaService->update($request->validated(), (int) $id);
+    }
+
+    public function active()
+    {
+        return $this->criteriaService->getActiveCriteria();
     }
 
     public function destroy($id)

@@ -5,33 +5,31 @@ namespace App\Services\ApplicationDocument;
 use App\Models\ApplicationDocument;
 use App\Services\ApplicationScore\AcademicScoreService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ApplicationDocumentReviewService
 {
     public function __construct(
         protected AcademicScoreService $academic
-    )
-    {}
+    ) {}
 
     public function review(
-        int $documentId, 
+        int $documentId,
         string $status,
         ?string $note,
         int $adminId
-    )
-    {
+    ) {
         $document = ApplicationDocument::with('application.documents')
             ->find($documentId);
 
-        if(!$document)
-        {
+        if (!$document) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Document not found.'
             ], 404);
         }
 
-        if($document->application->status !== 'submitted') {
+        if ($document->application->status !== 'submitted') {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Cannot review document. Application status is already ' . $document->application->status
@@ -39,9 +37,8 @@ class ApplicationDocumentReviewService
         }
         DB::beginTransaction();
 
-        try{
-            if($document->status !== 'pending')
-            {
+        try {
+            if ($document->status !== 'pending') {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Document already reviewed.'
@@ -61,7 +58,7 @@ class ApplicationDocumentReviewService
 
             $hasRejected = $allDocuments->contains('status', 'rejected');
 
-            if($hasRejected) {
+            if ($hasRejected) {
                 $application->update([
                     'status' => 'submitted',
                     'verified_at' => null
@@ -79,14 +76,15 @@ class ApplicationDocumentReviewService
 
                 $hasPending = $allDocuments->contains('status', 'pending');
 
-                if(empty($missingRequirements) && !$hasPending) {
+                if (empty($missingRequirements) && !$hasPending) {
                     $application->update([
                         'status' => 'verified',
                         'verified_at' => now()
                     ]);
-
-                    if(method_exists($this, 'academic')) {
-                            $this->academic->sync($application->fresh());
+                    try {
+                        $this->academic->sync($application->fresh());
+                    } catch (\Exception $e) {
+                        Log::error('Auto calculation failed:' . $e->getMessage());
                     }
                 }
             }
@@ -125,14 +123,13 @@ class ApplicationDocumentReviewService
                     'application_status' => $application->fresh()->status
                 ]
             ], 200);
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to review document.',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error.',
-            ],500);
+            ], 500);
         }
     }
 }

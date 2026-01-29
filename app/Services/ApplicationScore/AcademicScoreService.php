@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Services\ApplicationScore;
 
@@ -18,10 +18,9 @@ class AcademicScoreService
         $profile = $application->user->profile;
         $education = $application->user->profileEducation;
 
-        if(!$profile || !$education)
-        {
+        if (!$profile || !$education) {
             Log::warning('Academic sync skipped: profile or education missing', [
-            'application_id' => $application->id
+                'application_id' => $application->id
             ]);
             return response()->json([
                 'status' => 'error',
@@ -30,11 +29,10 @@ class AcademicScoreService
         }
 
         $criteria = Criteria::where('code', 'C1')
-        ->where('is_active', true)
-        ->first();
+            ->where('is_active', true)
+            ->first();
 
-        if(!$criteria)
-        {
+        if (!$criteria) {
             Log::warning('Academic sync skipped: criteria not found');
             return response()->json([
                 'status' => 'error',
@@ -45,10 +43,10 @@ class AcademicScoreService
         $finalValue = 0;
         $originalValue = 0;
 
-        if($profile->applicant_type === 'mahasiswa'){
+        if ($profile->applicant_type === 'mahasiswa') {
             $originalValue = $education->gpa ?? 0;
 
-            if($originalValue > 0) {
+            if ($originalValue > 0) {
                 $finalValue = ($originalValue / 4.00) * 100;
             }
         } else {
@@ -56,7 +54,7 @@ class AcademicScoreService
             $finalValue = $originalValue;
         }
 
-        if($finalValue <= 0) {
+        if ($finalValue <= 0) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Sync skipped. Academic score is 0 or invalid.',
@@ -69,13 +67,13 @@ class AcademicScoreService
 
         try {
             $score = ApplicationScore::updateOrCreate(
-                    [
-                        'internship_applications_id' => $application->id,
-                        'criterias_id' => $criteria->id
-                    ],
-                    [
-                        'value' => round($finalValue, 2)
-                    ]
+                [
+                    'internship_applications_id' => $application->id,
+                    'criterias_id' => $criteria->id
+                ],
+                [
+                    'value' => round($finalValue, 2)
+                ]
             );
 
             return response()->json([
@@ -84,8 +82,8 @@ class AcademicScoreService
                 'data' => [
                     'applicant_id' => $application->id,
                     'applicant_type' => $profile->applicant_type,
-                    'original_score' => $originalValue,     
-                    'converted_score' => round($finalValue, 2), 
+                    'original_score' => $originalValue,
+                    'converted_score' => round($finalValue, 2),
                     'score_id' => $score->id
                 ]
             ], 200);

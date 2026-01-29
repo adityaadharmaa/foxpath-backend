@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services\InternshipApplication;
+
 use App\Models\InternshipApplication;
 use App\Models\Profile;
 use App\Models\Program;
@@ -12,7 +13,7 @@ class InternshipApplicationService
     {
         $profile = Profile::where('users_id', $userId)->with('activeEducation')->first();
 
-        if(!$profile){
+        if (!$profile) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Please complete your profile before applying.'
@@ -27,9 +28,8 @@ class InternshipApplicationService
             'address'
         ];
 
-        foreach($requiredFields as $field)
-        {
-            if(!isset($profile->$field) || trim((string)$profile->$field) === ''){
+        foreach ($requiredFields as $field) {
+            if (!isset($profile->$field) || trim((string)$profile->$field) === '') {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Your profile is incomplete.',
@@ -40,24 +40,21 @@ class InternshipApplicationService
 
         $education = $profile->activeEducation;
 
-        if(!$education)
-        {
+        if (!$education) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Please complete your education data.'
             ], 422);
         }
 
-        if($profile->applicant_type === 'mahasiswa' && empty($education->gpa))
-        {
+        if ($profile->applicant_type === 'mahasiswa' && empty($education->gpa)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'GPA (IPK) is required for university students.'
             ], 422);
         }
 
-        if($profile->applicant_type === 'siswa' && empty($education->average_score))
-        {
+        if ($profile->applicant_type === 'siswa' && empty($education->average_score)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Average report score is required for students.'
@@ -65,15 +62,14 @@ class InternshipApplicationService
         }
 
         DB::beginTransaction();
-        
-        try{
+
+        try {
             $program = Program::where('id', $programId)
                 ->where('is_active', true)
                 ->lockForUpdate()
                 ->first();
 
-            if(!$program)
-            {
+            if (!$program) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Program not available'
@@ -85,8 +81,7 @@ class InternshipApplicationService
                 ->where('is_final', false)
                 ->exists();
 
-            if($activeExists)
-            {
+            if ($activeExists) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'You have an active application for this program'
@@ -108,10 +103,9 @@ class InternshipApplicationService
                 'message' => 'Application submitted successfully',
                 'data' => [
                     'application' => $application
-                    ]
+                ]
             ], 201);
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
@@ -168,7 +162,6 @@ class InternshipApplicationService
                     'application' => $application->fresh()
                 ]
             ], 200);
-
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -189,22 +182,22 @@ class InternshipApplicationService
                 'program:id,name',
                 'user.profile'
             ])
-            ->latest();
+                ->latest();
 
-            if(!$isAdmin) {
+            if (!$isAdmin) {
                 $query->where('users_id', $userId);
             }
 
-            if(isset($filters['q']) && $filters['q']) {
+            if (isset($filters['q']) && $filters['q']) {
                 $q = $filters['q'];
-                $query->whereHas('user.profile', function($sub) use ($q){
+                $query->whereHas('user.profile', function ($sub) use ($q) {
                     $sub->where('full_name', 'like', "%${q}%");
-                })->orWhereHas('program', function($sub) use ($q){
+                })->orWhereHas('program', function ($sub) use ($q) {
                     $sub->where('name', 'like', "%${q}");
                 });
             }
 
-            if(isset($filters['status']) && $filters['status']){
+            if (isset($filters['status']) && $filters['status']) {
                 $query->where('status', $filters['status']);
             };
 
@@ -226,7 +219,6 @@ class InternshipApplicationService
                     ]
                 ]
             ], 200);
-
         } catch (\Exception $e) {
 
             // DB::rollBack();
@@ -248,11 +240,12 @@ class InternshipApplicationService
                 'program',
                 'documents',
                 'user.profile',
-                'user.profileEducation'
+                'user.profileEducation',
+                'scores.criteria'
             ])
-            ->where('id', $applicationId);
+                ->where('id', $applicationId);
 
-            if(!$isAdmin) {
+            if (!$isAdmin) {
                 $query->where('users_id', $userId);
             }
 
@@ -272,7 +265,6 @@ class InternshipApplicationService
                 'message' => 'Application detail retrieved successfully.',
                 'data' => $application
             ], 200);
-
         } catch (\Exception $e) {
 
             // DB::rollBack();
