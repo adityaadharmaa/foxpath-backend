@@ -33,6 +33,7 @@ class InternshipApplicationService
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Your profile is incomplete.',
+                    'code' => 'PROFILE_INCOMPLETE',
                     'missing_field' => $field
                 ], 422);
             }

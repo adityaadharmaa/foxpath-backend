@@ -40,8 +40,11 @@ Route::prefix('v1')->group(function () {
 
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('/me', [AuthController::class, 'me'])->name('me');
+            Route::patch('/account/password', [ResetPasswordController::class, 'updatePassword'])->name('reset.password');
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
             Route::post('/email/resend', [VerificationController::class, 'resend'])->name('verification.send');
+            Route::get('/user/sessions', [AuthController::class, 'getSession']);
+            Route::delete('user/sessions/{id}', [AuthController::class, 'revokeSession']);
         });
     });
 
@@ -112,6 +115,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('notifications')->name('notifications.')->group(function () {
             Route::get('/', [NotificationController::class, 'index'])->name('index');
             Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+            Route::delete('/clear-read', [NotificationController::class, 'clearRead']);
             Route::post('/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
             Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
         });
@@ -126,7 +130,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/profile/educations', [ProfileEducationController::class, 'store'])->name('profiles.education.store');
         // Route::patch('/profile/educations/{education}', [ProfileEducationController::class, 'update'])->name('profiles.education.update');
         // Route::delete('/profile/educations/{education}', [ProfileEducationController::class, 'destroy'])->name('profiles.education.delete');
-        Route::get('programs', [ProgramController::class, 'index'])->name('user.programs-index');
+        Route::get('/programs/all', [ProgramController::class, 'index'])->name('user.programs-index');
+        Route::get('/programs/detail/{id}', [ProgramController::class, 'show']);
         Route::get('/applications', [InternshipApplicationController::class, 'index'])->name('applications.info');
         Route::get('/applications/{id}', [InternshipApplicationController::class, 'show'])->name('applications.info');
         Route::post('/applications', [InternshipApplicationController::class, 'store'])->name('applications.store');

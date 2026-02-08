@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         VerifyEmail::createUrlUsing(function ($notifiable) {
-            $frontendUrl = 'http://localhost:5173/email/verify';
+            $frontendUrl = config('app.frontend_url') . '/email/verify';
 
             $verifyUrl = URL::temporarySignedRoute(
                 'auth.verification.verify',
@@ -43,12 +43,9 @@ class AppServiceProvider extends ServiceProvider
                 ]
             );
 
-            $components = parse_url($verifyUrl);
-            parse_str($components['query'] ?? '', $queryParams);
+            $queryParams = parse_url($verifyUrl, PHP_URL_QUERY);
 
-            return $frontendUrl.'/'.$notifiable->getKey().'/'.sha1($notifiable->getEmailForVerification()).
-            '?expires='.($queryParams['expires'] ?? '').
-            '&signature='.($queryParams['signature']) ?? '';
+            return $frontendUrl . '/' . $notifiable->getKey() . '/' . sha1($notifiable->getEmailForVerification()) . '?' . $queryParams;
         });
     }
 }

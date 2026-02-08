@@ -19,14 +19,20 @@ class SawCalculationService
 
         try {
             $applications = InternshipApplication::where('programs_id', $programId)
-                ->whereIn('status', ['scored', 'accepted', 'rejected', 'calculated'])
+                ->whereIn('status', ['scored', 'calculated'])
                 ->get();
 
             if ($applications->isEmpty()) {
+                $anyApplicant = InternshipApplication::where('programs_id', $programId)->exists();
+
+                $message = $anyApplicant
+                    ? 'Tidak ada kandidat baru untuk dihitung (Semua kadidat sudah diputuskan/final).'
+                    : 'Belum ada pelamar pada program ini.';
+
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'No scored applications founds for calculation.'
-                ], 404);
+                    'status' => 'success',
+                    'message' => $message
+                ], 200);
             }
 
             $validApplications = $applications->filter(function ($app) {
@@ -54,8 +60,8 @@ class SawCalculationService
                     ->pluck('value');
 
                 $stats[$criteria->id] = [
-                    'max' => $values->max(),
-                    'min' => $values->min()
+                    'max' => $values->max() ?? 0,
+                    'min' => $values->min() ?? 0
                 ];
             }
 
@@ -70,13 +76,25 @@ class SawCalculationService
 
                     if (!$score || $score->value === null) continue;
 
-                    if ($stats[$criteria->id]['max'] > 0 && $stats[$criteria->id]['min'] > 0) {
+                    $max = $stats[$criteria->id]['max'];
+                    $min = $stats[$criteria->id]['min'];
+                    $normalized = 0;
+
+                    if ($max > 0 && $min >= 0) {
                         if ($criteria->type === 'benefit') {
-                            $normalized = $score->value / $stats[$criteria->id]['max'];
+                            $normalized = $score->value / $max;
                         } else {
-                            $normalized = $stats[$criteria->id]['min'] / $score->value;
+                            $normalized = ($score->value > 0) ? ($min / $score->value) : 0;
                         }
                     }
+
+                    // if ($stats[$criteria->id]['max'] > 0 && $stats[$criteria->id]['min'] > 0) {
+                    //     if ($criteria->type === 'benefit') {
+                    //         $normalized = $score->value / $stats[$criteria->id]['max'];
+                    //     } else {
+                    //         $normalized = $stats[$criteria->id]['min'] / $score->value;
+                    //     }
+                    // }
 
                     $weighted = $normalized * $criteria->weight;
                     $finalScore += $weighted;
@@ -86,10 +104,14 @@ class SawCalculationService
                         'weighted_value' => round($weighted, 6)
                     ]);
                 }
+
                 $newStatus = $application->status;
-                if (in_array($application->status, ['scored', 'calculated'])) {
+                if ($application->status === 'scored') {
                     $newStatus = 'calculated';
                 }
+                // if (in_array($application->status, ['scored', 'calculated'])) {
+                //     $newStatus = 'calculated';
+                // }
 
                 $application->update([
                     'final_score' => round($finalScore, 6),
@@ -112,7 +134,7 @@ class SawCalculationService
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'SAW calculation completed successfully.'
+                'message' => 'SAW calculation completed successfully ' .  $validApplications->count() .  ' participan has been scored.'
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();

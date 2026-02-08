@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Services\Notification;
 
@@ -6,15 +6,20 @@ use App\Models\User;
 
 class NotificationService
 {
-    public function getUserNotifications(User $user, int $perPage = 10 )
+    public function getUserNotifications(User $user, int $perPage = 10, $type = null)
     {
-        $notifications = $user->notifications()
-                        ->latest()
-                        ->paginate($perPage);
+        $query = $user->notifications();
 
-        $notifications->through(function ($notif){
+        if ($type) {
+            $query->where('data->type', $type);
+        }
+
+        $notifications = $query->latest()->paginate($perPage);
+
+        $notifications->through(function ($notif) {
             return [
                 'id' => $notif->id,
+                'title' => $notif->data['title'] ?? 'Info Sistem',
                 'type' => $this->simplifyType($notif->data['type'] ?? 'info'),
                 'message' => $notif->data['message'] ?? '',
                 'action_url' => $notif->data['action_url'] ?? null,
@@ -38,14 +43,12 @@ class NotificationService
 
     public function markAsRead(User $user, ?string $notificationId = null)
     {
-        if($notificationId)
-        {
+        if ($notificationId) {
             $notification = $user->notifications()
                 ->where('id', $notificationId)
                 ->first();
 
-            if($notification)
-            {
+            if ($notification) {
                 $notification->markAsRead();
                 return true;
             }
@@ -62,13 +65,18 @@ class NotificationService
         $notification = $user->notifications()
             ->where('id', $notificationId)
             ->first();
-        
-            if($notification) {
-                $notification->delete();
-                return true;
-            }
 
-            return false;
+        if ($notification) {
+            $notification->delete();
+            return true;
+        }
+
+        return false;
+    }
+
+    public function clearReadNotifications(User $user)
+    {
+        return $user->readNotifications()->delete();
     }
 
     private function simplifyType(string $type)

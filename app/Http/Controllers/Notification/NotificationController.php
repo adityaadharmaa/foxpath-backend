@@ -10,11 +10,11 @@ class NotificationController extends Controller
 {
     public function __construct(
         protected NotificationService $notifService
-    ){}
+    ) {}
 
     public function index(Request $request)
     {
-        return $this->notifService->getUserNotifications($request->user());
+        return $this->notifService->getUserNotifications($request->user(), $request->query('per_page', 10, $request->query('type')));
     }
 
     public function unreadCount(Request $request)
@@ -29,8 +29,7 @@ class NotificationController extends Controller
             $request->input('id')
         );
 
-        if(!$success)
-        {
+        if (!$success) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Notification not found or access denied.'
@@ -39,7 +38,16 @@ class NotificationController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Notification marked as read.'
+            'message' => $request->input('id') ? 'Notification marked as read.' : 'All notification mark as read.'
+        ], 200);
+    }
+
+    public function clearRead(Request $request)
+    {
+        $this->notifService->clearReadNotifications($request->user());
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Old notifications has been deleted.'
         ], 200);
     }
 
@@ -47,8 +55,7 @@ class NotificationController extends Controller
     {
         $success = $this->notifService->deleteNotification($request->user(), $id);
 
-        if($success)
-        {
+        if ($success) {
             return response()->json([
                 'status' => 'success',
                 'message' => 'Notification deleted.'

@@ -11,7 +11,14 @@ class EmailVerificationServices
 {
     public function verify(Request $request, $id, $hash)
     {
-        $user = User::findOrFail($id);
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akun tidak ditemukan. Silakan lakukan pendaftaran ulang.'
+            ], 404);
+        }
 
         if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
             abort(403, 'Invalid verification link.');
@@ -68,12 +75,13 @@ class EmailVerificationServices
         ], 200);
     }
 
-    public function resendPublic(Request $request){
+    public function resendPublic(Request $request)
+    {
         $request->validate(['email' => 'required|email']);
 
         $user = User::where('email', $request->email)->first();
 
-        if(!$user) {
+        if (!$user) {
             return response()->json([
                 'status' => 'success',
                 'message' => 'Jika email terdaftar, link verifikasi telah dikirim.'

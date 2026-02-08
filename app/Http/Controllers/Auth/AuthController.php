@@ -41,4 +41,14 @@ class AuthController extends Controller
     {
         return $this->authService->logout($request);
     }
+
+    public function getSession(Request $request)
+    {
+        return $this->authService->getSession($request);
+    }
+
+    public function revokeSession(Request $request, $id)
+    {
+        return $this->authService->revokeSession($request, $id);
+    }
 }

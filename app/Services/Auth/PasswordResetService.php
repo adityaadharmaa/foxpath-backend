@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class PasswordResetService
-{  
-   public function sendResetLink(string $email)
-   {
+{
+    public function sendResetLink(string $email)
+    {
         $email = trim(strtolower($email));
 
         Log::info('DEBUG RESET PASSWORD', [
@@ -70,10 +70,8 @@ class PasswordResetService
                 'status' => 'success',
                 'message' => 'If the email is registered, a password reset link has been sent.',
             ], 200);
-
         } catch (\Throwable $e) {
-            if(DB::transactionLevel() > 0)
-            {
+            if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
 
@@ -82,7 +80,7 @@ class PasswordResetService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString() // Penting untuk debugging
             ]);
-            
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Failed to process forgot password request.',
@@ -97,14 +95,14 @@ class PasswordResetService
         try {
             $record = PasswordResetToken::where('email', $data['email'])->first();
 
-            if(!$record || !Hash::check($data['token'], $record->token)){
+            if (!$record || !Hash::check($data['token'], $record->token)) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Invalid or incorrect token.'
                 ], 400);
             }
 
-            if(now()->diffInMinutes($record->created_at) > 60){
+            if (now()->diffInMinutes($record->created_at) > 60) {
                 $record->delete();
 
                 return response()->json([
@@ -115,7 +113,7 @@ class PasswordResetService
 
             $user = User::where('email', $data['email'])->first();
 
-            if(!$user) {
+            if (!$user) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'User not found.'
@@ -128,10 +126,9 @@ class PasswordResetService
 
             $record->delete();
 
-            try{
+            try {
                 $user->notify(new PasswordChangedNotification());
-            } catch (\Exception $e)
-            {
+            } catch (\Exception $e) {
                 Log::error('Gagal mengirim notifikasi password changed: ', $e->getMessage());
             }
 
@@ -141,8 +138,7 @@ class PasswordResetService
                 'status' => 'success',
                 'message' => 'Password has been successfully reset.'
             ], 200);
-
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
 
             Log::error('RESET PASSWORD ERROR', [
@@ -154,6 +150,50 @@ class PasswordResetService
                 'status' => 'error',
                 'message' => 'Failed to reset password.',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error.'
+            ], 500);
+        }
+    }
+
+    public function updatePassword(User $user, array $data)
+    {
+        if (!Hash::check($data['current_password'], $user->password)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Password saat ini tidak sesuai.'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user->update([
+                'password' => Hash::make($data['new_password'])
+            ]);
+
+            try {
+                $user->notify(new PasswordChangedNotification());
+            } catch (\Exception $e) {
+                Log::error('Gagal mengirim notifikasi update password.' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Password berhasil diperbarui.'
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('UPDATE PASSWORD ERROR', [
+                'user_id' => $user->id,
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memperbarui password.',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }

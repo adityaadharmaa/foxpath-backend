@@ -28,8 +28,8 @@ class AuthServices
     {
         try {
             $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL)
-                  ? 'email'
-                  : 'username';
+                ? 'email'
+                : 'username';
 
             $user = User::select(
                 'users.id',
@@ -65,7 +65,9 @@ class AuthServices
 
             $expiresAt = $remember ? now()->addYear() : now()->addHours(4);
 
-            $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
+            $deviceName = $request->header('User-Agent') ?: 'Uknown Device';
+
+            $token = $user->createToken($deviceName, ['*'], $expiresAt)->plainTextToken;
 
             $redirectTo = match ($user->roles_name) {
                 'admin' => '/admin/dashboard',
@@ -85,6 +87,7 @@ class AuthServices
                 'message' => 'Login Successful',
                 'data' => [
                     'user' => [
+                        'id' => $user->id,
                         'username' => $user->username,
                         'email' => $user->email,
                         'role' => $user->roles_name,
@@ -114,7 +117,6 @@ class AuthServices
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error.',
             ], 500);
         }
-
     }
 
     public function me(Request $request)
@@ -131,7 +133,7 @@ class AuthServices
                     'role' => $user->roles_name,
                     'profile_picture' => $user->profile ? $user->profile->profile_picture : null,
                 ]
-            ] 
+            ]
         ], 200);
     }
 
@@ -163,7 +165,7 @@ class AuthServices
                 try {
                     Notification::send($admins, new NewUserRegisterNotification($user));
                 } catch (\Exception $e) {
-                    logger()->error('Gagal mengirim notifikasi admin: '.$e->getMessage());
+                    logger()->error('Gagal mengirim notifikasi admin: ' . $e->getMessage());
                 }
             }
 
@@ -193,17 +195,17 @@ class AuthServices
     {
         try {
             $user = $request->user();
-            if($user) {
+            if ($user) {
                 $user->currentAccessToken()->delete();
-             
+
                 logger()->info('USER LOGOUT : ', [
-                'users_id' => $user->id,
-                'username' => $user->username,
-                'email' => $user->email,
-                'role' => $user->roles_name,
+                    'users_id' => $user->id,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'role' => $user->roles_name,
                 ]);
             }
-            
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Logout Successful',
@@ -247,7 +249,7 @@ class AuthServices
             DB::commit();
 
             $resetUrl = config('app.frontend_url')
-                ."/reset-password?token={$token}&email={$email}";
+                . "/reset-password?token={$token}&email={$email}";
 
             $user->refresh()->notify(
                 new ResetPasswordQueued($resetUrl)
@@ -269,6 +271,59 @@ class AuthServices
                 'status' => 'error',
                 'message' => 'Failed to process forgot password request.',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error.',
+            ], 500);
+        }
+    }
+
+    public function getSession(Request $request)
+    {
+        $tokens = $request->user()->tokens()->orderBy('last_used_at', 'desc')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $tokens->map(function ($token) use ($request) {
+                return [
+                    'id' => $token->id,
+                    'name' => $token->name === 'auth_token' ? 'Perangkat Tak Dikenal' : $token->name,
+                    'last_used_at' => $token->last_used_at,
+                    'is_current' => $token->id === $request->user()->currentAccessToken()->id,
+                ];
+            })
+        ], 200);
+    }
+
+    public function revokeSession(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+
+            $token = $user->tokens()->where('id', $id)->first();
+
+            if (!$token) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Sesi ini tidak ditemukan atau sudah kedauluwarsa.'
+                ], 404);
+            }
+
+            if ($token->id === $user->currentAccessToken()->id) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tidak dapat menghapus sesi yang sedang aktif. Gunakan menu Keluar.'
+                ], 400);
+            }
+
+            $token->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Sesi perangkat berhasil dihentikan.'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menghapus sesi.',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }

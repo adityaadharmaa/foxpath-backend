@@ -46,7 +46,6 @@ class VerifyEmailQueued extends VerifyEmail implements ShouldQueue
                 'username' => $notifiable->username,
                 'url' => $url
             ]);
-            
     }
 
     /**
