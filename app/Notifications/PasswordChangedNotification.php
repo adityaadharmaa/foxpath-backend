@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -26,7 +27,7 @@ class PasswordChangedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', 'broadcast'];
     }
 
     public function viaQueues(): array
@@ -62,5 +63,15 @@ class PasswordChangedNotification extends Notification implements ShouldQueue
             'message' => 'Password akun Anda baru saja diperbarui. Akun anda kini aman.',
             'action_url' => null
         ];
+    }
+
+    public function toBroadcast($notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'type' => 'password_changed',
+            'title' => 'Password Berhasil Diubah.',
+            'message' => 'Password akun Anda baru saja diperbarui. Akun anda kini aman.',
+            'action_url' => null
+        ]);
     }
 }

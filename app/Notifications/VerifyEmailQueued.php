@@ -5,8 +5,11 @@ namespace App\Notifications;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+
+use function Laravel\Prompts\info;
 
 class VerifyEmailQueued extends VerifyEmail implements ShouldQueue
 {
@@ -30,7 +33,7 @@ class VerifyEmailQueued extends VerifyEmail implements ShouldQueue
      */
     public function via($notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'broadcast'];
     }
 
     /**
@@ -46,6 +49,18 @@ class VerifyEmailQueued extends VerifyEmail implements ShouldQueue
                 'username' => $notifiable->username,
                 'url' => $url
             ]);
+    }
+
+
+    public function toBroadcast($notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'id' => $this->id,
+            'title' => 'Notifikasi Baru',
+            'message' => 'Silahkan lakukan verifikasi email anda.',
+            'type' => 'info',
+            'created_at_human' => now()->diffForHumans()
+        ]);
     }
 
     /**

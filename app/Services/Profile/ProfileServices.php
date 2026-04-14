@@ -42,8 +42,47 @@ class ProfileServices
           Storage::disk('public')->delete($profilePicturePath);
         }
 
-        $profilePicturePath = $data['profile_picture']->store('profiles', 'public');
+        $file = $data['profile_picture'];
+        $extension = strtolower($file->getClientOriginalExtension());
+        $tempPath = $file->getRealPath();
+
+        if ($extension === 'jpg' || $extension === 'jpeg') {
+          $image = imagecreatefromjpeg($tempPath);
+        } elseif ($extension === 'png') {
+          $image = imagecreatefrompng($tempPath);
+          imagepalettetotruecolor($image);
+        } elseif ($extension === 'webp') {
+          $image = imagecreatefromwebp($tempPath);
+        } else {
+          $image = null;
+        }
+
+        if ($image) {
+          $width = imagesx($image);
+          $heigth = imagesy($image);
+          $newWidth = 300;
+          $newHeight = floor($heigth * ($newWidth / $width));
+
+          $tmpImage = imagescale($image, $newWidth, $newHeight);
+
+          $filename = 'profiles/' . uniqid() . '.jpg';
+          $fullPath = storage_path('app/public/' . $filename);
+
+          if (!file_exists(storage_path('app/public/profiles'))) {
+            mkdir(storage_path('app/public/profiles'), 0755, true);
+          }
+
+          imagejpeg($tmpImage, $fullPath, 60);
+          imagedestroy($image);
+          imagedestroy($tmpImage);
+        }
+
+        $profilePicturePath = $filename;
+      } else {
+
+        $profilePicturePath =  $data['profile_picture']->store('profiles', 'public');
       }
+
 
       // if($data['applicant_type'] === 'siswa'){
       //    // NISN 10–12 digit

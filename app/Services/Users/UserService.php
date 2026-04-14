@@ -32,33 +32,36 @@ class UserService
         $type = $data['type'] ?? null;
         $perPage = $data['per_page'];
 
-        $query = User::select(
-            'users.id',
-            'users.username',
-            'users.email',
-            'users.created_at',
-            'users.roles_id',
-            'users.is_active',
-            'roles.name as role_name',
-            'profiles.applicant_type',
-            'profiles.profile_picture'
-        )
-            ->join('roles', 'users.roles_id', '=', 'roles.id')
-            ->leftJoin('profiles', 'users.id', '=', 'profiles.users_id')
-            ->orderBy('users.created_at', 'desc');
+
+        // $query = User::select(
+        //     'users.id',
+        //     'users.username',
+        //     'users.email',
+        //     'users.created_at',
+        //     'users.roles_id',
+        //     'users.is_active',
+        //     'roles.name as role_name',
+        //     'profiles.applicant_type',
+        //     'profiles.profile_picture'
+        // )
+        //     ->join('roles', 'users.roles_id', '=', 'roles.id')
+        //     ->leftJoin('profiles', 'users.id', '=', 'profiles.users_id')
+        //     ->orderBy('users.created_at', 'desc');
+
+        $query = User::with(['role', 'profile'])->orderBy('created_at', 'desc');
 
         if ($type) {
             $query->where('profiles.applicant_type', $type);
         }
 
-        if($search) {
-            $query->where(function($q) use ($search) {
+        if ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('users.username', 'like', "%{$search}%")
-                  ->orWhere('users.email', 'like', "%{$search}%");
+                    ->orWhere('users.email', 'like', "%{$search}%");
             });
         }
 
-        if($roleFilter){
+        if ($roleFilter) {
             $query->where('roles.name', $roleFilter);
         }
 
@@ -541,7 +544,7 @@ class UserService
 
         $fileName = $fileNameBase . '.' . $extension;
 
-        if(ob_get_contents()) ob_end_clean();
+        if (ob_get_contents()) ob_end_clean();
 
         return Excel::download(new UsersExport($type), $fileName);
     }

@@ -2,22 +2,24 @@
 
 namespace App\Notifications;
 
+use App\Models\InternshipApplication;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ResetPasswordNotification extends Notification
+class ApplicationDecisionNotification extends Notification
 {
     use Queueable;
 
+    public $application;
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(InternshipApplication $application)
     {
-        //
+        $this->application = $application;
     }
 
     /**
@@ -41,27 +43,6 @@ class ResetPasswordNotification extends Notification
     //         ->line('Thank you for using our application!');
     // }
 
-
-    public function toDatabase(object $notifiable): array
-    {
-        return [
-            'type' => 'reset_password',
-            'title' => 'Permintaan Reset Password',
-            'message' => 'Kami telah mengirim link reset password akun Anda ke email Anda.',
-            'action_url' => '/reset-password',
-        ];
-    }
-
-    public function toBroadcast($notifiable): BroadcastMessage
-    {
-        return new BroadcastMessage([
-            'type' => 'reset_password',
-            'title' => 'Permintaan Reset Password',
-            'message' => 'Kami telah mengirim link reset password akun Anda ke email Anda.',
-            'action_url' => '/reset-password',
-        ]);
-    }
-
     /**
      * Get the array representation of the notification.
      *
@@ -69,8 +50,22 @@ class ResetPasswordNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        $statusText = $this->application->status === 'accepted' ? 'Diterima' : 'Ditolak';
         return [
-            //
+            'application_id' => $this->application->id,
+            'program_name' => $this->application->program->name,
+            'status' => $this->application->status,
+            'message' => "Lamaran Anda pada program {$this->application->program->name} telah {$statusText}.",
+            'type' => 'application_decision'
         ];
+    }
+
+    public function toBroadcast($notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'id' => $this->id,
+            'data' => $this->toArray($notifiable),
+            'created_at' => now()->toDateTimeString(),
+        ]);
     }
 }

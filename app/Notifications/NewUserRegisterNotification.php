@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -32,7 +33,7 @@ class NewUserRegisterNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database','mail'];
+        return ['database', 'mail', 'broadcast'];
     }
 
     public function viaQueues(): array
@@ -68,5 +69,16 @@ class NewUserRegisterNotification extends Notification implements ShouldQueue
             'action_url' => '/admin/users',
             'users_id' => $this->newUser->id
         ];
+    }
+
+    public function toBroadcast($notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'type' => 'info',
+            'title' => 'Pendaftaran User Baru',
+            'message' => "User {$this->newUser->username} ({$this->newUser->email}) baru saja mendaftar.",
+            'action_url' => '/admin/users',
+            'users_id' => $this->newUser->id
+        ]);
     }
 }

@@ -23,9 +23,13 @@ use App\Http\Controllers\VerificationController;
 use App\Services\Email\EmailVerificationServices;
 use App\Services\InternshipApplication\InternshipApplicationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Broadcast::routes(['middleware' => ['auth:sanctum']]);
+    });
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->name('login');
         Route::post('/register', [AuthController::class, 'register'])->name('register');

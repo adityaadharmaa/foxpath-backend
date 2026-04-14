@@ -2,12 +2,16 @@
 
 namespace App\Services\ApplicationDecision;
 
+use App\Mail\ApplicationStatusMail;
 use App\Models\{
     InternshipApplication,
     Program
 };
+use App\Notifications\ApplicationDecisionNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ApplicationDecisionService
 {
@@ -18,7 +22,8 @@ class ApplicationDecisionService
         try {
             $program = Program::findOrFail($programId);
 
-            $applications = InternshipApplication::where('programs_id', $programId)
+            $applications = InternshipApplication::with(['user.profile', 'program'])
+                ->where('programs_id', $programId)
                 ->where('status', 'calculated')
                 ->whereNotNull('rank')
                 ->orderBy('rank', 'asc')
@@ -32,21 +37,52 @@ class ApplicationDecisionService
             }
 
             foreach ($applications as $index => $application) {
-                if ($index < $program->capacity) {
-                    $application->update([
-                        'status' => 'accepted',
-                        'admitted_at' => now(),
-                        'decided_at' => now(),
-                        'is_final' => true
-                    ]);
+                // if ($index < $program->capacity) {
+                //     $application->update([
+                //         'status' => 'accepted',
+                //         'admitted_at' => now(),
+                //         'decided_at' => now(),
+                //         'is_final' => true
+                //     ]);
 
+                //     $this->setPlacementDates($application, $program);
+                // } else {
+                //     $application->update([
+                //         'status' => 'rejected',
+                //         'decided_at' => now(),
+                //         'is_final' => true
+                //     ]);
+                // }
+
+                $isAccepted = $index < $program->capacity;
+                $status = $isAccepted ? 'accepted' : 'rejected';
+
+                $updatData = [
+                    'status' => $status,
+                    'decided_at' => now(),
+                    'is_final' => true
+                ];
+
+                if ($isAccepted) {
+                    $updatData['admitted_at'] = now();
+                }
+
+                $application->update($updatData);
+
+                if ($isAccepted) {
                     $this->setPlacementDates($application, $program);
-                } else {
-                    $application->update([
-                        'status' => 'rejected',
-                        'decided_at' => now(),
-                        'is_final' => true
-                    ]);
+                }
+
+                try {
+                    $delayInSeconds = $index * 5;
+                    Mail::to($application->user->email)->later(
+                        now()->addSeconds($delayInSeconds),
+                        (new ApplicationStatusMail($application))->onQueue('emails')
+                    );
+
+                    $application->user->notify(new ApplicationDecisionNotification($application));
+                } catch (\Exception $e) {
+                    Log::error("Gagal kirim email ke {$application->user->email} : " . $e->getMessage());
                 }
             }
 
@@ -54,7 +90,7 @@ class ApplicationDecisionService
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Applicants have been decided (Accepted/Rejected) based on ranking quota.'
+                'message' => 'Applicants have been decided and notification emails have been sent.'
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();

@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Services\Auth\AuthServices;
 use App\Services\Email\EmailVerificationServices;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -47,5 +49,9 @@ class AppServiceProvider extends ServiceProvider
 
             return $frontendUrl . '/' . $notifiable->getKey() . '/' . sha1($notifiable->getEmailForVerification()) . '?' . $queryParams;
         });
+
+        // RateLimiter::for('email-outbound', function (object $job) {
+        //     return Limit::perMinute(20)->by('email-outbound');
+        // });
     }
 }
